@@ -54,9 +54,9 @@ Diagramas são commitados em dois formatos: `.drawio` para edição e `.png` par
 | :--- | :--- |
 | Vinicius | Slides da apresentação |
 | Jordana | Diagrama de casos de uso |
-| Wesley | Diagramas de atividades |
-| JV | Diagramas de sequência |
-| Raphaella | Requisitos, regras de negócio, DER e diagrama de classes |
+| Wesly | Diagramas de atividades |
+| J. Victor | Diagramas de sequência |
+| Raika | Requisitos, regras de negócio, DER e diagrama de classes |
 | Esdras | Protótipo |
 | Erick | Organização, dinâmica de apresentação e revisão final |
 
