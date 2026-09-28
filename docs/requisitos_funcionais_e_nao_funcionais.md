@@ -30,7 +30,7 @@ RF-010 - O sistema deve permitir cadastrar combos.
 
 RF-011 - O sistema deve permitir alterar precos de produtos.
 
-RF-012 - O sistema deve preservar no pedido o preco praticado no momento da venda, mesmo que o cadastro seja alterado depois.
+RF-012 - O sistema deve registrar em cada item do pedido o preco praticado no momento de sua inclusao, permitindo sua consulta posterior independentemente de alteracoes realizadas no cadastro do produto.
 
 ### 2. Usuarios e permissoes
 
@@ -104,7 +104,7 @@ RF-044 - O sistema deve permitir transferir itens entre mesas ou comandas.
 
 RF-045 - O sistema deve permitir emitir pre-conta.
 
-RF-046 - O sistema deve permitir fechar a conta da mesa ou comanda.
+RF-046 - O sistema deve permitir fechar a conta da mesa ou comanda apos a quitacao do valor devido.
 
 RF-047 - O sistema deve permitir dividir o pagamento da conta.
 
@@ -112,9 +112,9 @@ RF-048 - O sistema deve liberar a mesa apos o fechamento da conta.
 
 ### 5. Fluxo do pedido
 
-RF-049 - Todo pedido deve possuir um status.
+RF-049 - O sistema deve permitir acompanhar e atualizar o status operacional de cada pedido.
 
-RF-050 - Os estados minimos do pedido devem ser Recebido, Em preparacao, Pronto, Finalizado e Cancelado.
+RF-050 - O sistema deve apresentar os pedidos de acordo com os estados Recebido, Em preparacao, Pronto, Finalizado e Cancelado.
 
 RF-051 - O sistema deve registrar data e horario de cada alteracao de status.
 
@@ -158,7 +158,7 @@ RF-068 - O sistema deve permitir identificar pedidos prontos.
 
 RF-069 - O sistema deve apresentar o numero do pedido pronto para retirada.
 
-RF-070 - O sistema deve permitir marcar pedidos de balcao ou retirada como finalizados.
+RF-070 - O sistema deve permitir registrar a entrega ou retirada de pedidos de balcao e retirada, considerando as regras de pagamento aplicaveis ao pedido.
 
 RF-071 - O sistema deve registrar o horario da retirada ou finalizacao operacional.
 
@@ -214,9 +214,15 @@ RF-094 - O sistema deve calcular troco em pagamentos em dinheiro.
 
 RF-095 - O sistema deve registrar a forma de pagamento utilizada.
 
-RF-096 - Pedidos pagos no iFood ou 99Food devem ser identificados como pagos pela plataforma.
+RF-096 - O sistema deve identificar como pagos externamente os pedidos do iFood ou 99Food cujo pagamento tenha sido confirmado pela respectiva plataforma.
 
 RF-097 - O sistema deve impedir cobranca duplicada de pedidos identificados como ja pagos externamente.
+
+RF-097A - O sistema deve permitir registrar o pagamento de pedidos presenciais antes ou depois do preparo, de acordo com o tipo de atendimento adotado para o pedido.
+
+RF-097B - O sistema deve permitir manter pedidos de mesa ou comanda com pagamento pendente enquanto a conta permanecer aberta.
+
+RF-097C - O sistema deve apresentar a situacao de pagamento do pedido, diferenciando pelo menos Pendente e Pago.
 
 ### 10. Caixa
 
@@ -388,11 +394,11 @@ RF-171 - O administrador deve poder consultar o historico de auditoria.
 
 ### 1. Desempenho
 
-RNF-001 - As principais operacoes do PDV devem responder sem atraso perceptivel em condicoes normais de uso.
+RNF-001 - As operacoes de inclusao, alteracao e remocao de itens no PDV devem apresentar resposta ao usuario em ate 2 segundos, em condicoes normais de operacao.
 
-RNF-002 - O envio de pedidos para a cozinha deve ocorrer em poucos segundos.
+RNF-002 - Apos a confirmacao de um pedido, sua disponibilizacao para a cozinha deve ocorrer em ate 3 segundos, quando os componentes envolvidos estiverem disponiveis.
 
-RNF-003 - Mudancas de status dos pedidos devem ser atualizadas rapidamente entre os terminais.
+RNF-003 - Alteracoes de status dos pedidos devem ser refletidas nos demais terminais em ate 3 segundos, em condicoes normais de comunicacao.
 
 RNF-004 - A geracao de relatorios nao deve impedir a realizacao de vendas.
 
@@ -442,13 +448,13 @@ RNF-022 - Dados pessoais eventualmente recebidos de integracoes nao devem ser ex
 
 ### 6. Usabilidade
 
-RNF-023 - A tela do PDV deve possuir interface simples e adequada para uso rapido.
+RNF-023 - A tela do PDV deve priorizar a visualizacao dos produtos, itens do pedido, valor total e acoes principais de atendimento sem exigir navegacao por modulos administrativos.
 
-RNF-024 - As acoes mais frequentes devem exigir poucos passos.
+RNF-024 - As operacoes frequentes de selecao de produto, alteracao de quantidade e inclusao de adicionais devem poder ser realizadas diretamente durante a montagem do pedido, sem necessidade de sair da tela de atendimento.
 
 RNF-025 - Botoes utilizados durante o atendimento devem ser adequados para telas sensiveis ao toque, quando aplicavel.
 
-RNF-026 - A interface da cozinha deve permitir leitura rapida dos pedidos.
+RNF-026 - A interface da cozinha deve exibir, sem necessidade de abrir telas adicionais, o identificador do pedido, seus itens, personalizacoes, origem, horario de recebimento e estado atual.
 
 RNF-027 - Pedidos atrasados devem possuir destaque visual.
 
@@ -490,4 +496,4 @@ RNF-041 - O banco de dados deve manter integridade entre pedidos, itens, pagamen
 
 RNF-042 - As principais regras de negocio devem ser passiveis de teste.
 
-Total: 171 requisitos funcionais e 42 requisitos nao funcionais.
+Total: 174 requisitos funcionais e 42 requisitos nao funcionais.

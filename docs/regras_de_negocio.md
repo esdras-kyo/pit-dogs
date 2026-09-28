@@ -62,6 +62,14 @@ RN-027 - Um pedido não pode ser marcado como Pronto antes de ter sido colocado 
 
 RN-028 - Um pedido não pode ser Finalizado antes de estar Pronto, exceto quando o fluxo específico de balcão definido pela operação não exigir etapa de preparação.
 
+RN-028A - Para pedidos de mesa ou comanda, o estado Pronto representa a conclusão da produção, mas não implica o encerramento da conta.
+
+RN-028B - Pedidos vinculados a mesa ou comanda somente podem ser encerrados financeiramente após a quitação integral do valor devido.
+
+RN-028C - Para pedidos de balcão ou retirada, o pagamento pode ocorrer antes ou depois da preparação, conforme o fluxo de atendimento adotado pelo estabelecimento.
+
+RN-028D - A situação operacional do pedido e sua situação de pagamento devem ser controladas independentemente.
+
 ## 4. Mesas e comandas
 
 RN-029 - Uma mesa livre pode ser aberta para iniciar consumo.
@@ -77,6 +85,12 @@ RN-033 - A emissão de pré-conta não encerra a mesa ou comanda.
 RN-034 - A mesa somente deve voltar ao estado livre após o fechamento de sua conta.
 
 RN-035 - A divisão de pagamento não altera o valor total devido pela mesa ou comanda.
+
+RN-035A - Uma mesa ou comanda pode possuir um ou mais pedidos enquanto sua conta permanecer aberta.
+
+RN-035B - O pagamento parcial de uma mesa ou comanda não encerra sua conta enquanto existir valor pendente.
+
+RN-035C - O valor devido pela mesa ou comanda deve corresponder ao saldo dos pedidos e itens ainda não quitados associados à conta.
 
 ## 5. Cozinha e produção dos pedidos
 
@@ -126,6 +140,16 @@ RN-055 - Em pagamento em dinheiro, o troco deve corresponder à diferença entre
 
 RN-056 - Pedidos identificados como pagos pelo iFood ou 99Food não podem ser cobrados novamente no caixa do estabelecimento.
 
+RN-056A - Um pedido presencial pode possuir pagamento pendente durante sua preparação ou consumo.
+
+RN-056B - O registro integral do valor devido deve alterar a situação de pagamento do pedido ou conta para Pago.
+
+RN-056C - Pagamentos parciais ou divididos devem permanecer associados ao mesmo pedido ou conta até que o valor devido seja integralmente quitado.
+
+RN-056D - O fato de um pedido estar pago não altera automaticamente seu estado operacional de preparação.
+
+RN-056E - O fato de um pedido estar Pronto não significa que ele esteja necessariamente pago.
+
 RN-057 - Toda abertura de caixa deve estar vinculada a um operador responsável e a um valor inicial informado.
 
 RN-058 - Sangrias e suprimentos devem compor a movimentação do caixa e permanecer registrados no histórico.
@@ -159,6 +183,8 @@ RN-069 - Adicionais vinculados a itens de estoque devem acrescentar seu consumo 
 RN-070 - A atualização de uma ficha técnica deve afetar vendas futuras e não deve reescrever o consumo histórico de vendas anteriores.
 
 RN-071 - O custo estimado do produto deve ser calculado com base nos ingredientes e quantidades definidos em sua ficha técnica.
+
+RN-071A - Quando uma personalização permitida do produto alterar o consumo de um ingrediente controlado em estoque, o consumo teórico deve considerar essa alteração.
 
 ## 10. Tirada de demanda
 
