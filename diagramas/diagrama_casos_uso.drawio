@@ -31,7 +31,7 @@
         <mxCell id="n_CANC" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Cancelar pedido" vertex="1">
           <mxGeometry height="62" width="170" x="345" y="525" as="geometry" />
         </mxCell>
-        <mxCell id="n_FPED" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Finalizar pedido" vertex="1">
+        <mxCell id="n_FPED" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Registrar entrega/retirada" vertex="1">
           <mxGeometry height="62" width="170" x="345" y="615" as="geometry" />
         </mxCell>
         <mxCell id="n_ADESC" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#000000;" value="Aplicar desconto" vertex="1">
@@ -51,8 +51,8 @@
         <mxCell id="n_ENVP" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#000000;" value="Enviar pedido&lt;br&gt;para produção" vertex="1">
           <mxGeometry height="56" width="160" x="638" y="492" as="geometry" />
         </mxCell>
-        <mxCell id="note_fped" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;{Restrição RN-028}:&lt;/b&gt; pedido só pode ser Finalizado após estar Pronto, exceto balcão sem etapa de preparo." vertex="1">
-          <mxGeometry height="64" width="360" x="345" y="718" as="geometry" />
+        <mxCell id="note_fped" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;{RN-028/028A–028D}:&lt;/b&gt; entrega ou retirada segue as regras de pagamento aplicáveis. Estado operacional e situação de pagamento são independentes; o pedido pode estar Pronto/Pendente ou Em preparação/Pago." vertex="1">
+          <mxGeometry height="74" width="360" x="345" y="718" as="geometry" />
         </mxCell>
         <mxCell id="note_canc" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;{Restrição RN-012/013}:&lt;/b&gt; cancelamento e desconto exigem permissão específica do perfil." vertex="1">
           <mxGeometry height="54" width="360" x="345" y="800" as="geometry" />
@@ -83,8 +83,8 @@
         <mxCell id="n_DPAG_mesa" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fillColor=#ffffff;strokeColor=#000000;" value="Dividir pagamento" vertex="1">
           <mxGeometry height="56" width="160" x="575" y="920" as="geometry" />
         </mxCell>
-        <mxCell id="note_mesa" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;{RN-030/033/034}:&lt;/b&gt; pré-conta não encerra mesa. Mesa só fica livre após fechar conta. Divisão não altera o total (RN-035)." vertex="1">
-          <mxGeometry height="60" width="390" x="470" y="1105" as="geometry" />
+        <mxCell id="note_mesa" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;{RN-030/033/034/035 e RN-035A–035C}:&lt;/b&gt; pré-conta não encerra a mesa. Uma conta pode reunir um ou mais pedidos. Pagamento parcial não encerra a conta; a mesa só fica livre após quitação integral e fechamento." vertex="1">
+          <mxGeometry height="70" width="390" x="470" y="1105" as="geometry" />
         </mxCell>
         <mxCell id="e_DPAG" edge="1" parent="1" source="n_DPAG_mesa" style="edgeStyle=none;html=1;rounded=0;dashed=1;dashPattern=6 4;endArrow=open;endSize=10;strokeWidth=1.1;fontSize=10;labelBackgroundColor=#ffffff;" target="n_FCON" value="«extend»">
           <mxGeometry relative="1" as="geometry" />
@@ -119,8 +119,8 @@
         <mxCell id="e_CFP" edge="1" parent="1" source="n_CFP" style="edgeStyle=none;html=1;rounded=0;dashed=1;dashPattern=6 4;endArrow=open;endSize=10;strokeWidth=1.1;fontSize=10;labelBackgroundColor=#ffffff;" target="n_RPAG" value="«extend»&lt;br&gt;&lt;i&gt;[mais de uma forma]&lt;/i&gt;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="note_pag" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;Fluxo interno (RF-090–097 / RN-053–056):&lt;/b&gt;&lt;br&gt;• Aceita dinheiro, cartão e Pix (combinados)&lt;br&gt;• Calcula troco automaticamente (dinheiro)&lt;br&gt;• Verifica se já foi pago pela plataforma (RN-056)&lt;br&gt;• Registra forma e recebimento no caixa" vertex="1">
-          <mxGeometry height="80" width="230" x="610" y="1370" as="geometry" />
+        <mxCell id="note_pag" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;Fluxo interno (RF-090–097C / RN-053–056E):&lt;/b&gt;&lt;br&gt;• Aceita dinheiro, cartão e Pix, inclusive combinados&lt;br&gt;• Calcula troco em dinheiro&lt;br&gt;• Permite pagamento antes ou depois do preparo&lt;br&gt;• Mantém a situação Pendente ou Pago&lt;br&gt;• Só considera pago externamente após confirmação da plataforma&lt;br&gt;• Pagamento não altera automaticamente o estado operacional&lt;br&gt;• Registra forma e recebimento no caixa" vertex="1">
+          <mxGeometry height="140" width="230" x="610" y="1370" as="geometry" />
         </mxCell>
         <mxCell id="n_ABCX" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Abrir caixa" vertex="1">
           <mxGeometry height="56" width="170" x="360" y="1524" as="geometry" />
@@ -492,8 +492,8 @@
         <mxCell id="n_RVEN" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Gerar relatório de vendas" vertex="1">
           <mxGeometry height="62" width="200" x="2450" y="1750" as="geometry" />
         </mxCell>
-        <mxCell id="note_ficha" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;Fluxo automático pós-venda (RN-067–071):&lt;/b&gt;&lt;br&gt;Sistema baixa insumos automaticamente pela ficha vigente.&lt;br&gt;Custo estimado = soma ingredientes × quantidades (RF-124).&lt;br&gt;Atualização da ficha não retroage ao histórico (RN-070)." vertex="1">
-          <mxGeometry height="96" width="200" x="2230" y="379" as="geometry" />
+        <mxCell id="note_ficha" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;Fluxo automático pós-venda (RN-067–071A):&lt;/b&gt;&lt;br&gt;Sistema baixa insumos conforme a ficha vigente e as personalizações do item. Remoções e adicionais que afetem ingredientes controlados alteram o consumo teórico.&lt;br&gt;Custo estimado = soma ingredientes × quantidades (RF-124).&lt;br&gt;Atualização da ficha não retroage ao histórico (RN-070)." vertex="1">
+          <mxGeometry height="130" width="200" x="2230" y="379" as="geometry" />
         </mxCell>
         <mxCell id="n_CFT" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Criar / atualizar ficha técnica" vertex="1">
           <mxGeometry height="62" width="200" x="2435" y="553" as="geometry" />
