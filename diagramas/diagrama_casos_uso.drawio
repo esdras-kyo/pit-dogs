@@ -43,7 +43,7 @@
         <mxCell id="2GOcS8QKPIpbXH7GYFBg-15" edge="1" parent="1" source="n_ENVP" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=1;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=12;fontColor=default;dashed=1;" target="n_RPED">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-16" connectable="0" parent="2GOcS8QKPIpbXH7GYFBg-15" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=12;fontColor=default;" value="extend" vertex="1">
+        <mxCell id="2GOcS8QKPIpbXH7GYFBg-16" connectable="0" parent="2GOcS8QKPIpbXH7GYFBg-15" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=12;fontColor=default;" value="«extend»&lt;br&gt;&lt;i&gt;[pedido exige produção]&lt;/i&gt;" vertex="1">
           <mxGeometry relative="1" x="-0.2895" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -101,10 +101,10 @@
         <mxCell id="note_rn039" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#fff0d0;strokeColor=#e0a020;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;{RN-027/039}:&lt;/b&gt; status Pronto só após Em preparação. Pedidos além do tempo esperado são identificados como atrasados." vertex="1">
           <mxGeometry height="54" width="390" x="940" y="568" as="geometry" />
         </mxCell>
-        <mxCell id="n_FPED2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="atualizar status do pedido&lt;div&gt;(em preparo,pronto ou retirado)&lt;/div&gt;" vertex="1">
+        <mxCell id="n_FPED2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Atualizar status do preparo&lt;br&gt;(Em preparação ou Pronto)" vertex="1">
           <mxGeometry height="70" width="160" x="1210" y="329" as="geometry" />
         </mxCell>
-        <mxCell id="e_PROD_FIN" edge="1" parent="1" source="n_PROD" style="edgeStyle=none;html=1;rounded=0;endArrow=open;endSize=10;strokeWidth=1.1;dashed=1;dashPattern=6 4;fontSize=10;labelBackgroundColor=#ffffff;" target="n_FPED2" value="«extend»&lt;br&gt;&lt;i&gt;[pedido Pronto]&lt;/i&gt;">
+        <mxCell id="e_PROD_FIN" edge="1" parent="1" source="n_PROD" style="edgeStyle=none;html=1;rounded=0;endArrow=open;endSize=10;strokeWidth=1.1;dashed=1;dashPattern=6 4;fontSize=10;labelBackgroundColor=#ffffff;" target="n_FPED2" value="«include»">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="pkg_pag" parent="1" style="text;html=1;align=left;verticalAlign=top;spacingLeft=6;fontSize=13;fontStyle=1;fillColor=#f5f5f5;strokeColor=#666666;rounded=0;" value="Pagamentos e Caixa" vertex="1">
@@ -188,14 +188,6 @@
         <mxCell id="n_CIE" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Cadastrar item de estoque" vertex="1">
           <mxGeometry height="56" width="180" x="1800" y="323" as="geometry" />
         </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-23" edge="1" parent="1" source="n_DEM" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=12;fontColor=default;dashed=1;" target="n_CSH">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-24" connectable="0" parent="2GOcS8QKPIpbXH7GYFBg-23" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=12;fontColor=default;" value="include" vertex="1">
-          <mxGeometry relative="1" x="0.0853" y="-3" as="geometry">
-            <mxPoint y="-1" as="offset" />
-          </mxGeometry>
-        </mxCell>
         <mxCell id="n_DEM" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Definir estoque mínimo" vertex="1">
           <mxGeometry height="56" width="180" x="1790" y="399" as="geometry" />
         </mxCell>
@@ -214,18 +206,6 @@
         <mxCell id="n_CFOR" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Cadastrar fornecedor" vertex="1">
           <mxGeometry height="56" width="180" x="1870" y="1165" as="geometry" />
         </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-17" edge="1" parent="1" source="n_RCOM" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=1;entryDx=0;entryDy=0;fontFamily=Helvetica;fontSize=12;fontColor=default;dashed=1;" target="n_RSAI">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="1780" y="810" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-18" connectable="0" parent="2GOcS8QKPIpbXH7GYFBg-17" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=12;fontColor=default;" value="include" vertex="1">
-          <mxGeometry relative="1" x="-0.1332" y="-1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
         <mxCell id="n_RCOM" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Registrar compra" vertex="1">
           <mxGeometry height="56" width="180" x="1870" y="1080" as="geometry" />
         </mxCell>
@@ -235,7 +215,7 @@
         <mxCell id="note_comp" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#fff0d0;strokeColor=#e0a020;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;{RN-077/078}:&lt;/b&gt; compra vinculada a fornecedor. Recebimento gera entrada de estoque. Sugestão considera saldo atual e mínimo (RN-080)." vertex="1">
           <mxGeometry height="70" width="255" x="1580" y="1253" as="geometry" />
         </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-34" edge="1" parent="1" source="n_RPER" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;endArrow=none;endFill=0;strokeWidth=2;">
+        <mxCell id="2GOcS8QKPIpbXH7GYFBg-34" edge="1" parent="1" source="n_RPER" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;endArrow=none;endFill=0;strokeWidth=2;" target="n_ADM">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="2160" y="802" as="targetPoint" />
           </mxGeometry>
@@ -300,7 +280,7 @@
         <mxCell id="note_cad" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=12;fillColor=#FFFFFF;strokeColor=#666666;fontSize=9;align=left;verticalAlign=middle;spacingLeft=5;" value="&lt;b&gt;Cadastrar estabelecimento inclui (RF-001–012):&lt;/b&gt;&lt;br&gt;dados básicos, horários, categorias, produtos, preços,&lt;br&gt;adicionais (obrig./opcl., mín/máx, preço), combos.&lt;br&gt;&lt;b&gt;{RN-009/010}:&lt;/b&gt; preço do pedido fixado no momento da venda." vertex="1">
           <mxGeometry height="96" width="210" x="2225" y="482" as="geometry" />
         </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-45" edge="1" parent="1" source="n_ATD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;exitX=0.75;exitY=0.1;exitDx=0;exitDy=0;exitPerimeter=0;endArrow=none;endFill=0;">
+        <mxCell id="2GOcS8QKPIpbXH7GYFBg-45" edge="1" parent="1" source="n_ATD" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;exitX=0.75;exitY=0.1;exitDx=0;exitDy=0;exitPerimeter=0;endArrow=none;endFill=0;" target="n_AUT">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="150" y="456.6" />
@@ -325,7 +305,7 @@
         <mxCell id="n_COZ" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=13;fontStyle=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.6;" value="Cozinha" vertex="1">
           <mxGeometry height="76" width="36" x="1140" y="100" as="geometry" />
         </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-47" edge="1" parent="1" source="n_CX" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;endArrow=none;endFill=0;">
+        <mxCell id="2GOcS8QKPIpbXH7GYFBg-47" edge="1" parent="1" source="n_CX" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;endArrow=none;endFill=0;" target="n_AUT">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="150" y="440" as="targetPoint" />
           </mxGeometry>
@@ -498,17 +478,7 @@
         <mxCell id="n_CFT" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Criar / atualizar ficha técnica" vertex="1">
           <mxGeometry height="62" width="200" x="2435" y="553" as="geometry" />
         </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-20" edge="1" parent="1" source="n_GSC" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.448;entryY=0.041;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Helvetica;fontSize=12;fontColor=default;dashed=1;dashPattern=8 8;" target="n_TDEM">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-21" connectable="0" parent="2GOcS8QKPIpbXH7GYFBg-20" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=12;fontColor=default;" value="extend" vertex="1">
-          <mxGeometry relative="1" x="0.2115" y="-2" as="geometry">
-            <mxPoint y="-1" as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-28" edge="1" parent="1" source="2GOcS8QKPIpbXH7GYFBg-27" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;endArrow=none;endFill=0;">
+        <mxCell id="2GOcS8QKPIpbXH7GYFBg-28" edge="1" parent="1" source="2GOcS8QKPIpbXH7GYFBg-27" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontFamily=Helvetica;fontSize=12;fontColor=default;endArrow=none;endFill=0;" target="n_ADM">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1780" y="530" />
@@ -518,16 +488,6 @@
         </mxCell>
         <mxCell id="2GOcS8QKPIpbXH7GYFBg-27" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=11;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Gerar relatório de estoque" vertex="1">
           <mxGeometry height="62" width="160" x="1550" y="523" as="geometry" />
-        </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-29" edge="1" parent="1" source="2GOcS8QKPIpbXH7GYFBg-27" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.562;entryY=1.008;entryDx=0;entryDy=0;entryPerimeter=0;fontFamily=Helvetica;fontSize=12;fontColor=default;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="n_CSH">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="2210" y="560" as="sourcePoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="2GOcS8QKPIpbXH7GYFBg-30" connectable="0" parent="2GOcS8QKPIpbXH7GYFBg-29" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Helvetica;fontSize=12;fontColor=default;" value="include" vertex="1">
-          <mxGeometry relative="1" x="0.1421" y="2" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
         </mxCell>
         <mxCell id="2GOcS8QKPIpbXH7GYFBg-32" edge="1" parent="1" source="note_cx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;innerLoopWaypoints=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;fontFamily=Helvetica;fontSize=12;fontColor=default;" target="note_cx">
           <mxGeometry relative="1" as="geometry" />
