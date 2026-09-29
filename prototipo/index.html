@@ -446,7 +446,7 @@ const USERS = [
 ];
 const ACESSO = {"Atendente":["pdv","cozinha"],"Cozinha":["cozinha"],"Caixa":["pdv","caixa"],"Administrador":["pdv","cozinha","caixa","estoque","gestao"]};
 const TELAS = {pdv:"Pedidos",cozinha:"Cozinha",caixa:"Caixa",estoque:"Estoque",gestao:"Gestão"};
-const PERM = {desconto:["Atendente","Caixa","Administrador"],cancelar:["Atendente","Caixa","Administrador"]};
+const PERM = {desconto:["Atendente","Caixa","Administrador"],cancelar:["Atendente","Caixa","Administrador"],reabrir:["Caixa","Administrador"]};
 const pode = a => !!(state.user && PERM[a].includes(state.user.perfil));
 const ORIGENS = ["Balcão","Mesa/comanda","iFood","99Food"];
 
@@ -562,7 +562,8 @@ state.orders = [
   mkOrder(107,"Mesa/comanda",{mesa:6},[item(4,2,[["molhos","Maionese caseira"],["adicionais","Bacon"]],[],"Um sem bacon")],"Finalizado",40,[3,12,4])
 ];
 state.orders.forEach(o=>{ if(o.pagoExterno) o.pagamentos=[{forma:"Plataforma",valor:orderTotal(o),t:o.criadoEm}]; });
-state.contasFechadas = {};   // mesas com conta fechada (consolidada, aguardando pagamento)
+state.contasFechadas = {};   // mesa -> {por,t} quando a conta é fechada (consolidada, aguardando pagamento)
+state.reaberturas = [];      // log de reaberturas de conta (usuário, hora, justificativa)
 
 /* ---------- estoque: movimentação e baixa por ficha técnica ---------- */
 function movimentar(itemId,tipo,origem,qtd,extra){
@@ -904,7 +905,7 @@ function renderReceber(){
     const os = contaOrders(m), dev = os.reduce((s,o)=>s+orderTotal(o)-paidOf(o),0), fech = contaFechada(m);
     return '<li><div class="l1"><span style="font-weight:500">Mesa '+m+'</span><span class="num">'+brl(dev)+'</span></div>'+
       '<div class="l1 small"><span class="muted">'+os.length+(os.length>1?' pedidos na conta':' pedido na conta')+'</span><span class="st '+(fech?'neutro':'pend')+'">'+(fech?'Conta fechada':'Conta aberta')+'</span></div>'+
-      '<div class="l2"><button class="btn text" data-act="abrirmesa" data-v="'+m+'" style="padding-left:0">Ver conta</button><button class="btn primary" data-act="receberconta" data-v="'+m+'"'+(fechado?' disabled':'')+'>Registrar pagamento</button></div></li>';
+      '<div class="l2"><button class="btn text" data-act="abrirmesa" data-v="'+m+'" style="padding-left:0">Ver conta</button><button class="btn primary" data-act="receberconta" data-v="'+m+'"'+(fechado||!fech?' disabled':'')+'>Registrar pagamento</button></div>'+(!fech?'<div class="small muted">Feche a conta (em Mesas) antes de receber.</div>':'')+'</li>';
   }).join("");
   return '<div class="pad" style="padding-bottom:0">'+(fechado?'<div class="notice warn">O caixa está fechado. Abra o caixa para registrar pagamentos.</div>':'')+
     '<p class="small muted">Situação do pedido e situação de pagamento são independentes: um pedido pode estar pronto e ainda pendente.</p><h3>Balcão e delivery</h3></div>'+
@@ -1217,22 +1218,31 @@ function renderSheet(){
   if (m.type==="compra") return sheetCompra(m);
   if (m.type==="forn") return sheetForn(m);
   if (m.type==="baixaint") return sheetBaixaInt(m);
+  if (m.type==="reabrir") return sheetReabrir(m);
   return "";
 }
 function sheetMesa(m){
-  const os = contaOrders(m.mesa);
+  const os = contaOrders(m.mesa), fech = contaFechada(m.mesa), caixaFechado = state.caixa.fechado;
   const total = os.reduce((s,o)=>s+orderTotal(o),0), pago = os.reduce((s,o)=>s+paidOf(o),0);
   const body = os.map(o=>'<div class="conta-ped"><div class="row"><span><span class="mono">#'+o.id+'</span> <span class="small muted">'+hhmm(o.criadoEm)+', '+o.status+'</span></span><span class="num">'+brl(orderTotal(o))+'</span></div>'+
       '<ul class="order-items">'+o.itens.map((it,i)=>{ const md=mods(it); return '<li><div>'+it.qty+'× '+esc(it.nome)+'</div><div class="num">'+brl(itemTotal(it))+'</div>'+(md.length?'<div class="det">'+md.join("<br>")+'</div>':'')+
-        '<div class="ctrl" style="justify-content:flex-end;margin-top:0"><button class="btn text" data-act="transf" data-o="'+o.id+'" data-i="'+i+'">'+ICON.transfer+'Transferir</button></div></li>'; }).join("")+'</ul></div>').join("")+
+        (fech?'':'<div class="ctrl" style="justify-content:flex-end;margin-top:0"><button class="btn text" data-act="transf" data-o="'+o.id+'" data-i="'+i+'">'+ICON.transfer+'Transferir</button></div>')+'</li>'; }).join("")+'</ul></div>').join("")+
     '<div class="sumbox"><div class="row small muted"><span>Consumo</span><span class="num">'+brl(total)+'</span></div>'+
       (pago?'<div class="row small muted"><span>Já pago</span><span class="num">'+brl(pago)+'</span></div>':'')+
       '<div class="row"><span>A pagar</span><span class="big num">'+brl(total-pago)+'</span></div></div>';
-  const fech = contaFechada(m.mesa), caixaFechado = state.caixa.fechado;
-  const foot = '<div style="display:grid;gap:8px;width:100%"><div class="row" style="gap:8px"><button class="btn grow" data-act="preconta" data-v="'+m.mesa+'">Imprimir pré-conta</button><button class="btn grow" data-act="lancar" data-v="'+m.mesa+'"'+(fech?' disabled':'')+'>Lançar itens</button></div>'+
-    (fech?'<p class="small muted">Conta fechada — não aceita novos pedidos.</p>':'<button class="btn'+(can("caixa")?'':' primary')+' lg block" data-act="fecharconta" data-v="'+m.mesa+'">Fechar conta da mesa</button>')+
-    (can("caixa")?'<button class="btn primary lg block" data-act="receberconta" data-v="'+m.mesa+'"'+(caixaFechado?' disabled':'')+'>Registrar pagamento</button>':(fech?'<p class="small muted">O pagamento é registrado pelo caixa.</p>':''))+'</div>';
+  let acoes;
+  if (!fech) acoes = '<button class="btn'+(can("caixa")?'':' primary')+' lg block" data-act="fecharconta" data-v="'+m.mesa+'">Fechar conta da mesa</button>'+(can("caixa")?'<p class="small muted">O pagamento é registrado depois de fechar a conta.</p>':'');
+  else acoes = '<div class="notice">Conta fechada — apenas consulta, impressão e pagamento.</div>'+
+    (can("caixa")?'<button class="btn primary lg block" data-act="receberconta" data-v="'+m.mesa+'"'+(caixaFechado?' disabled':'')+'>Registrar pagamento</button>':'<p class="small muted">O pagamento é registrado pelo caixa.</p>')+
+    (pode("reabrir")?'<button class="btn lg block" data-act="reabrirconta" data-v="'+m.mesa+'">Reabrir conta</button>':'');
+  const foot = '<div style="display:grid;gap:8px;width:100%"><div class="row" style="gap:8px"><button class="btn grow" data-act="preconta" data-v="'+m.mesa+'">Imprimir pré-conta</button><button class="btn grow" data-act="lancar" data-v="'+m.mesa+'"'+(fech?' disabled':'')+'>Lançar itens</button></div>'+acoes+'</div>';
   return sheetFrame('Mesa '+m.mesa,body,foot,os.length+(os.length>1?' pedidos na conta':' pedido na conta'));
+}
+function sheetReabrir(m){
+  const ok=m.just.trim();
+  const body='<p class="small muted">Reabrir permite corrigir lançamentos de uma conta já fechada. Fica registrado com seu nome, horário e justificativa.</p>'+
+    '<label class="field"><span>Justificativa (obrigatória)</span><input type="text" id="rj" data-act="rjust" value="'+esc(m.just)+'" autocomplete="off"></label>';
+  return sheetFrame('Reabrir conta — mesa '+m.mesa,body,'<button class="btn danger lg block" data-act="confirmreabrir"'+(ok?'':' disabled')+'>Reabrir conta</button>');
 }
 function sheetTransf(m){
   const o = state.orders.find(x=>x.id===m.orderId), it = o.itens[m.idx];
@@ -1261,12 +1271,13 @@ function sheetPed(m){
   const pags = o.pagamentos.length ? '<div style="display:grid;gap:6px"><h3>Pagamentos</h3><ul class="hist">'+o.pagamentos.map(p=>'<li><span>'+p.forma+', '+hhmm(p.t)+'</span><span class="num">'+brl(p.valor)+'</span></li>').join("")+'</ul></div>' : '';
   const hist = '<div style="display:grid;gap:6px"><h3>Histórico de status</h3><ul class="hist">'+o.historico.map(h=>'<li><span>'+h.status+'</span><span class="num muted">'+hhmm(h.t)+'</span></li>').join("")+'</ul></div>';
   const canc = o.status==="Cancelado" ? '<div class="notice">Cancelado por '+esc(o.canceladoPor||"")+'. Motivo: '+esc(o.motivoCancel||"")+'.</div>' : '';
-  const podeCancelar = !["Finalizado","Cancelado"].includes(o.status) && !o.pagoExterno;
+  const contaTrancada = o.origem==="Mesa/comanda" && contaFechada(o.mesa);
+  const podeCancelar = !["Finalizado","Cancelado"].includes(o.status) && !o.pagoExterno && !contaTrancada;
   const entregaLbl = o.origem==="Mesa/comanda"?"Registrar entrega na mesa":(o.origem==="Balcão"?"Registrar retirada":"Registrar coleta do entregador");
   const foot = (o.status==="Pronto"?'<button class="btn primary lg block" data-act="retirada" data-v="'+o.id+'">'+ICON.bag+entregaLbl+'</button>':'')+
     '<button class="btn lg" data-act="reimprimir" data-v="'+o.id+'">'+ICON.printer+'Reimprimir</button>'+
-    (podeCancelar ? (pode("cancelar") ? '<button class="btn danger lg grow" data-act="cancelar" data-v="'+o.id+'">Cancelar pedido</button>' : '<span class="small muted grow">Cancelar exige perfil Administrador.</span>')
-      : (o.pagoExterno && o.status!=="Cancelado" ? '<span class="small muted grow">Cancelamento de delivery vem da plataforma.</span>' : ''));
+    (podeCancelar ? (pode("cancelar") ? '<button class="btn danger lg grow" data-act="cancelar" data-v="'+o.id+'">Cancelar pedido</button>' : '<span class="small muted grow">Sem permissão para cancelar.</span>')
+      : (contaTrancada ? '<span class="small muted grow">Conta fechada — reabra para alterar.</span>' : (o.pagoExterno && o.status!=="Cancelado" ? '<span class="small muted grow">Cancelamento de delivery vem da plataforma.</span>' : '')));
   return sheetFrame('Pedido <span class="mono">#'+o.id+'</span>',canc+itens+tot+pags+hist,foot,esc(origemLabel(o))+', registrado por '+esc(o.usuario));
 }
 function sheetUser(m){
@@ -1380,6 +1391,7 @@ function voltar(m){
   if (m.back) return {type:"pedido"};
   if (m.backPed) return {type:"ped",orderId:m.orderId};
   if (m.backMesa && contaOrders(m.backMesa).length) return {type:"mesa",mesa:m.backMesa};
+  if (m.type==="reabrir") return {type:"mesa",mesa:m.mesa};
   if (m.type==="estmov") return {type:"estdet",itemId:m.itemId};
   if (m.type==="estitem" && m.id) return {type:"estdet",itemId:m.id};
   return null;
@@ -1407,7 +1419,7 @@ document.addEventListener("click",ev=>{
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   if (a==="closebg"){ if (ev.target===el){ state.sheet=voltar(state.sheet); render(); } return; }
-  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato","ivfis","ivap","dmplan","dmprod","biitem","biqtd","bimotivo"].includes(a)) return;
+  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato","ivfis","ivap","dmplan","dmprod","biitem","biqtd","bimotivo","rjust"].includes(a)) return;
   ev.preventDefault();
   const m = state.sheet;
   switch(a){
@@ -1514,7 +1526,7 @@ document.addEventListener("click",ev=>{
     case "transf": state.sheet={type:"transf",orderId:Number(el.dataset.o),idx:Number(el.dataset.i),backMesa:m.mesa}; break;
     case "transfpara": {
       const o = state.orders.find(x=>x.id===m.orderId), dest = Number(v), orig = o.mesa, it = o.itens[m.idx];
-      if (contaFechada(dest)){ flash("Mesa "+dest+" está com a conta fechada."); break; }
+      if (contaFechada(orig)||contaFechada(dest)){ flash("Conta fechada — transferência bloqueada."); break; }
       if (o.itens.length===1) o.mesa = dest;
       else {
         o.itens.splice(m.idx,1);
@@ -1524,10 +1536,13 @@ document.addEventListener("click",ev=>{
       }
       state.sheet = contaOrders(orig).length ? {type:"mesa",mesa:orig} : null;
       flash(it.qty+"× "+it.nome+" transferido da mesa "+orig+" para a mesa "+dest+"."); break; }
-    case "fecharconta": { const n=Number(v); if(!contaOrders(n).length) break; state.contasFechadas[n]=true;
+    case "fecharconta": { const n=Number(v); if(!contaOrders(n).length) break; state.contasFechadas[n]={por:state.user.nome,t:now()};
       flash("Conta da mesa "+n+" fechada. Não aceita novos pedidos. Aguardando pagamento no caixa."); break; }
-    case "receberconta": { const n=Number(v), os=contaOrders(n), dev=r2(os.reduce((s,o)=>s+orderTotal(o)-paidOf(o),0));
+    case "receberconta": { const n=Number(v); if(!contaFechada(n)){ flash("Feche a conta da mesa antes de registrar o pagamento."); break; }
+      const os=contaOrders(n), dev=r2(os.reduce((s,o)=>s+orderTotal(o)-paidOf(o),0));
       state.sheet={type:"pag",mesa:n,backMesa:(m&&m.type==="mesa")?n:null,linhas:[{forma:"Dinheiro",valor:fmtIn(dev),recebido:""}]}; break; }
+    case "reabrirconta": state.sheet={type:"reabrir",mesa:Number(v),just:""}; break;
+    case "confirmreabrir": { if(!pode("reabrir")) break; state.reaberturas.push({mesa:m.mesa,por:state.user.nome,t:now(),justificativa:m.just.trim()}); delete state.contasFechadas[m.mesa]; state.sheet={type:"mesa",mesa:m.mesa}; flash("Conta da mesa "+m.mesa+" reaberta."); break; }
     case "ctab": state.caixaTab=v; break;
     case "receber": { const o=state.orders.find(x=>x.id===Number(v)); state.sheet={type:"pag",orderId:o.id,linhas:[{forma:"Dinheiro",valor:fmtIn(orderTotal(o)-paidOf(o)),recebido:""}]}; break; }
     case "pforma": m.linhas[Number(el.dataset.i)].forma=v; break;
@@ -1638,6 +1653,7 @@ document.addEventListener("input",ev=>{
   else if (a==="dmprod"){ const p=state.planos.find(x=>x.status==="Aberto"); if(p) p.itens[Number(el.dataset.i)].produzido=el.value; }
   else if (a==="biqtd") m.qtd = el.value;
   else if (a==="bimotivo") m.motivo = el.value;
+  else if (a==="rjust") m.just = el.value;
   else return;
   render();
 });
