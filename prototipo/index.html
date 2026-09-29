@@ -587,7 +587,18 @@ function consumoDaOrder(o){ const m={};
   return m;
 }
 function baixaVenda(o){ if(o.baixado) return; o.baixado=true;   // RN-066 / RNF-011: uma venda, uma baixa
-  const m=consumoDaOrder(o); Object.keys(m).forEach(iid=>{ if(m[iid]>0) movimentar(Number(iid),"Saída","Venda",m[iid],{pedido:o.id}); });
+  const m=consumoDaOrder(o); o.consumo=m; Object.keys(m).forEach(iid=>{ if(m[iid]>0) movimentar(Number(iid),"Saída","Venda",m[iid],{pedido:o.id}); });
+}
+function estornarCancelamento(o){   // reverte estoque e pagamento conforme o estado do pedido (revisão)
+  const notas=[];
+  if (o.baixado){ const preparo = o.status==="Em preparação"||o.status==="Pronto", m=o.consumo||consumoDaOrder(o);
+    Object.keys(m).forEach(iid=>{ if(m[iid]>0){ movimentar(Number(iid),"Entrada","Cancelamento",m[iid],{pedido:o.id});   // devolve a baixa da venda
+      if (preparo) movimentar(Number(iid),"Saída","Perda",m[iid],{pedido:o.id,motivo:"Pedido #"+o.id+" cancelado após preparo"}); } }); // RN-087
+    o.baixado=false; notas.push(preparo?"insumos lançados como perda (já preparado)":"insumos devolvidos ao estoque");
+  }
+  if (o.pagoExterno) notas.push("estorno pela plataforma");
+  else if (o.pagamentos.length){ const pago=paidOf(o); o.pagamentos.forEach(p=>state.caixa.recebimentos.push({pedido:o.id,forma:p.forma,valor:-p.valor,t:now()})); notas.push("estorno de "+brl(pago)); }
+  return notas;
 }
 const custoItens = itens => r2(itens.reduce((s,[iid,q])=>s+q*((itemEst(iid)||{}).custo||0),0));  // RF-124 / RN-071
 const custoFicha = pid => custoItens(FICHAS[pid]||[]);
@@ -1571,8 +1582,10 @@ document.addEventListener("click",ev=>{
     case "cancelar": state.sheet={type:"cancel",orderId:Number(v),motivo:"",outro:"",backPed:!!(m&&m.type==="ped")}; break;
     case "confirmcancel": {
       const o = state.orders.find(x=>x.id===m.orderId);
+      const notas = estornarCancelamento(o);   // estorno + reversão/perda de estoque antes de mudar o status
       setStatus(o,"Cancelado"); o.motivoCancel = m.motivo==="Outro"?m.outro.trim():m.motivo; o.canceladoPor = state.user.nome;
-      state.sheet = m.backPed ? {type:"ped",orderId:o.id} : null; flash("Pedido #"+o.id+" cancelado."); break; }
+      state.sheet = m.backPed ? {type:"ped",orderId:o.id} : null;
+      flash("Pedido #"+o.id+" cancelado"+(notas.length?" — "+notas.join("; "):"")+"."); break; }
     case "movtipo": state.movForm.tipo=v; break;
     case "fechar": {
       const e = esperado(), inf={}; ["Dinheiro","Cartão","Pix"].forEach(f=>inf[f]=parseMoney(state.caixa.informado[f]));
