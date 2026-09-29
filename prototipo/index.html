@@ -549,7 +549,7 @@ const state = {
   },
   movForm:{tipo:"Sangria",valor:"",obs:""},
   movEstoque:[], compras:[], inventarios:[], planos:[], perdas:[], alertas:[],
-  estoqueTab:"itens", nextMov:1, nextCompra:1,
+  estoqueTab:"itens", nextMov:1, nextCompra:1, perdasPeriodo:"hoje",
   sheet:null, toast:""
 };
 state.orders = [
@@ -956,7 +956,7 @@ function renderFechamento(){
 function renderEstoque(){
   const tabs=[["itens","Itens"],["fichas","Fichas técnicas"],["compras","Compras"],["inventario","Inventário"],["demanda","Demanda"],["perdas","Perdas"],["relatorio","Relatório"]];
   const sub=subtabs(state.estoqueTab,"esttab",tabs);
-  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras,inventario:renderInventario,demanda:renderDemanda};
+  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras,inventario:renderInventario,demanda:renderDemanda,perdas:renderPerdas};
   const body = F[state.estoqueTab] ? F[state.estoqueTab]() : '<div class="pad"><p class="empty">Em construção nesta etapa do protótipo.</p></div>';
   return '<div class="page-h"><h1>Estoque</h1></div><section class="panel">'+sub+body+'</section>';
 }
@@ -1046,6 +1046,26 @@ function renderInvContagem(inv){
   const faltam=inv.itens.some(x=>x.fisica==="");
   return '<div class="pad" style="padding-bottom:0"><h3>Inventário #'+inv.id+' — em contagem</h3><p class="small muted">Informe a quantidade física de cada item.</p></div>'+
     rows+'<div class="pad"><button class="btn primary lg block" data-act="invconcluir"'+(faltam?' disabled':'')+'>Concluir inventário</button>'+(faltam?'<p class="small muted">Informe todos os itens para concluir.</p>':'')+'</div>';
+}
+function renderPerdas(){
+  const per=state.perdasPeriodo, corte=now()-(per==="semana"?7:1)*24*60*MIN;
+  const lista=state.movEstoque.filter(x=>(x.origem==="Perda"||x.origem==="Consumo interno") && x.t>=corte).slice().reverse();
+  const seg='<div class="seg">'+[["hoje","Hoje"],["semana","7 dias"]].map(([k,l])=>'<button data-act="pdper" data-v="'+k+'" aria-pressed="'+(per===k)+'">'+l+'</button>').join("")+'</div>';
+  const rows=lista.map(x=>{ const it=itemEst(x.itemId); return '<li><div class="l1"><span>'+x.origem+' · '+esc(it?it.nome:"")+'</span><span class="num dif-falta">− '+x.qtd+' '+(it?it.un:"")+'</span></div><div class="l1 small muted"><span>'+(x.motivo?esc(x.motivo):"—")+'</span><span>'+hhmm(x.t)+', '+esc((x.usuario||"").split(" ")[0])+'</span></div></li>'; }).join("");
+  return '<div class="pad" style="padding-bottom:0"><div class="row"><h3>Perdas e consumo interno</h3><span style="display:flex;gap:8px"><button class="btn sm" data-act="novaperda">Registrar perda</button><button class="btn sm" data-act="novoconsumo">Consumo interno</button></span></div></div>'+
+    '<div class="pad" style="padding-top:10px;padding-bottom:0">'+seg+'</div>'+
+    '<ul class="plain-list">'+(rows||'<li class="empty">Nada registrado no período.</li>')+'</ul>';
+}
+function sheetBaixaInt(m){
+  const it=itemEst(m.itemId), perda=m.modo==="Perda", val=parseMoney(m.qtd);
+  const ok = m.itemId && val>0 && (!perda||m.motivo.trim()) && (!it||val<=it.saldo);
+  const seg='<div class="seg">'+["Perda","Consumo interno"].map(t=>'<button data-act="biTipo" data-v="'+t+'" aria-pressed="'+(m.modo===t)+'">'+t+'</button>').join("")+'</div>';
+  const sel='<label class="field"><span>Item</span><select id="bi-item" data-act="biitem"><option value="">Escolher…</option>'+ITENS_ESTOQUE.filter(i=>i.ativo).map(i=>'<option value="'+i.id+'"'+(m.itemId===i.id?' selected':'')+'>'+esc(i.nome)+' ('+i.un+')</option>').join("")+'</select></label>';
+  const body=seg+sel+(it?'<p class="small muted">Saldo atual: <span class="num">'+it.saldo+' '+it.un+'</span></p>':'')+
+    '<label class="field"><span>Quantidade'+(it?' ('+it.un+')':'')+'</span><input type="text" id="bi-qtd" data-act="biqtd" inputmode="decimal" value="'+esc(m.qtd)+'" class="num"></label>'+
+    (perda?'<label class="field"><span>Motivo (obrigatório)</span><input type="text" id="bi-mot" data-act="bimotivo" placeholder="Ex.: queimou, venceu" value="'+esc(m.motivo)+'"></label>':'')+
+    (it&&val>it.saldo?'<div class="err">Quantidade maior que o saldo.</div>':'');
+  return sheetFrame(perda?'Registrar perda':'Consumo interno',body,'<button class="btn primary lg block" data-act="confirmbi"'+(ok?'':' disabled')+'>Registrar</button>');
 }
 function renderDemanda(){
   const aberto=state.planos.find(p=>p.status==="Aberto");
@@ -1180,6 +1200,7 @@ function renderSheet(){
   if (m.type==="ficha") return sheetFicha(m);
   if (m.type==="compra") return sheetCompra(m);
   if (m.type==="forn") return sheetForn(m);
+  if (m.type==="baixaint") return sheetBaixaInt(m);
   return "";
 }
 function sheetMesa(m){
@@ -1370,7 +1391,7 @@ document.addEventListener("click",ev=>{
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   if (a==="closebg"){ if (ev.target===el){ state.sheet=voltar(state.sheet); render(); } return; }
-  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato","ivfis","ivap","dmplan","dmprod"].includes(a)) return;
+  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato","ivfis","ivap","dmplan","dmprod","biitem","biqtd","bimotivo"].includes(a)) return;
   ev.preventDefault();
   const m = state.sheet;
   switch(a){
@@ -1422,6 +1443,14 @@ document.addEventListener("click",ev=>{
       const id=Math.max(0,...state.planos.map(p=>p.id))+1; state.planos.push({id,itens,status:"Aberto",criadoEm:now()});
       flash("Plano de produção #"+id+" gerado."); break; }
     case "demconcluir": { const p=state.planos.find(x=>x.status==="Aberto"); if(!p)break; p.status="Concluído"; p.concluidoEm=now(); flash("Plano #"+p.id+" concluído."); break; }
+    case "novaperda": state.sheet={type:"baixaint",modo:"Perda",itemId:null,qtd:"",motivo:""}; break;
+    case "novoconsumo": state.sheet={type:"baixaint",modo:"Consumo interno",itemId:null,qtd:"",motivo:""}; break;
+    case "biTipo": m.modo=v; break;
+    case "pdper": state.perdasPeriodo=v; break;
+    case "confirmbi": { const it=itemEst(m.itemId), val=parseMoney(m.qtd);
+      if(!it||val<=0) break; if(val>it.saldo){ flash("Quantidade maior que o saldo ("+it.saldo+" "+it.un+")."); break; }
+      movimentar(m.itemId,"Saída",m.modo,val,{motivo:m.motivo.trim()});   // RN-087/088
+      state.sheet=null; flash(m.modo+" registrada em "+it.nome+"."); break; }
     case "goint": state.screen="gestao"; state.gestaoTab="integracoes"; window.scrollTo(0,0); break;
     case "cat": state.cat=v; state.busca=""; break;
     case "addprod": {
@@ -1546,6 +1575,7 @@ document.addEventListener("change",ev=>{
   else if (a==="fadd"){ const id=Number(el.value); if(id && !m.itens.some(x=>x[0]===id)) m.itens.push([id,1]); }
   else if (a==="cforn"){ m.fornId=Number(el.value); }
   else if (a==="cadd"){ const id=Number(el.value); if(id && !m.itens.some(x=>x[0]===id)) m.itens.push([id,1,(itemEst(id)||{}).custo||0]); }
+  else if (a==="biitem"){ m.itemId=Number(el.value)||null; }
   else if (a==="ivap"){ const inv=state.inventarios.find(i=>i.status==="Em contagem"); if(inv) inv.itens[Number(el.dataset.i)].aprovado=el.checked; }
   else if (a==="opt"){
     const g = el.dataset.g, G = GRUPOS[g], sel = m.sel[g] = m.sel[g]||[];
@@ -1590,6 +1620,8 @@ document.addEventListener("input",ev=>{
   else if (a==="ivfis"){ const inv=state.inventarios.find(i=>i.status==="Em contagem"); if(inv){ const x=inv.itens[Number(el.dataset.i)]; x.fisica=el.value; if(r2(parseMoney(el.value)-x.teorico)===0) x.aprovado=false; } }
   else if (a==="dmplan"){ const p=state.planos.find(x=>x.status==="Aberto"); if(p) p.itens[Number(el.dataset.i)].planejado=el.value; }
   else if (a==="dmprod"){ const p=state.planos.find(x=>x.status==="Aberto"); if(p) p.itens[Number(el.dataset.i)].produzido=el.value; }
+  else if (a==="biqtd") m.qtd = el.value;
+  else if (a==="bimotivo") m.motivo = el.value;
   else return;
   render();
 });
