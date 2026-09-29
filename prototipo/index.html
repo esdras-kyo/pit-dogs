@@ -794,7 +794,7 @@ function renderCozinha(){
       let acao = "";
       if (st==="Recebido") acao = '<button class="btn primary lg block" data-act="iniciar" data-v="'+o.id+'">'+ICON.play+'Iniciar preparo</button>';
       if (st==="Em preparação") acao = '<button class="btn primary lg block" data-act="pronto" data-v="'+o.id+'">'+ICON.check+'Marcar como pronto</button>';
-      if (st==="Pronto") acao = '<button class="btn lg block" data-act="retirada" data-v="'+o.id+'">'+ICON.bag+(o.origem==="Mesa/comanda"?"Registrar entrega na mesa":(o.origem==="Balcão"?"Registrar retirada":"Registrar coleta do entregador"))+'</button>';
+      // entrega/retirada é registrada na tela de pedidos (Consultar), não na cozinha — RF-070, matriz: ator Atendente. Cozinha encerra em Pronto (RN-040).
       const meta = st==="Pronto"
         ? '<span class="muted">Pronto às '+hhmm(tSince(o,"Pronto"))+', preparo de '+mins(tSince(o,"Pronto")-tSince(o,"Em preparação"))+' min</span>'+pagLabel(o)
         : '<span class="muted">Recebido às '+hhmm(o.criadoEm)+'</span><span class="'+(late?'late-lbl':'muted')+'">'+(late?'Atrasado: ':'')+espera+' de '+lim+' min</span>';
@@ -1017,7 +1017,9 @@ function sheetPed(m){
   const hist = '<div style="display:grid;gap:6px"><h3>Histórico de status</h3><ul class="hist">'+o.historico.map(h=>'<li><span>'+h.status+'</span><span class="num muted">'+hhmm(h.t)+'</span></li>').join("")+'</ul></div>';
   const canc = o.status==="Cancelado" ? '<div class="notice">Cancelado por '+esc(o.canceladoPor||"")+'. Motivo: '+esc(o.motivoCancel||"")+'.</div>' : '';
   const podeCancelar = !["Finalizado","Cancelado"].includes(o.status) && !o.pagoExterno;
-  const foot = '<button class="btn lg" data-act="reimprimir" data-v="'+o.id+'">'+ICON.printer+'Reimprimir</button>'+
+  const entregaLbl = o.origem==="Mesa/comanda"?"Registrar entrega na mesa":(o.origem==="Balcão"?"Registrar retirada":"Registrar coleta do entregador");
+  const foot = (o.status==="Pronto"?'<button class="btn primary lg block" data-act="retirada" data-v="'+o.id+'">'+ICON.bag+entregaLbl+'</button>':'')+
+    '<button class="btn lg" data-act="reimprimir" data-v="'+o.id+'">'+ICON.printer+'Reimprimir</button>'+
     (podeCancelar ? (pode("cancelar") ? '<button class="btn danger lg grow" data-act="cancelar" data-v="'+o.id+'">Cancelar pedido</button>' : '<span class="small muted grow">Cancelar exige perfil Administrador.</span>')
       : (o.pagoExterno && o.status!=="Cancelado" ? '<span class="small muted grow">Cancelamento de delivery vem da plataforma.</span>' : ''));
   return sheetFrame('Pedido <span class="mono">#'+o.id+'</span>',canc+itens+tot+pags+hist,foot,esc(origemLabel(o))+', registrado por '+esc(o.usuario));
