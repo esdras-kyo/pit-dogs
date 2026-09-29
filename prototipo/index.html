@@ -604,6 +604,9 @@ const custoItens = itens => r2(itens.reduce((s,[iid,q])=>s+q*((itemEst(iid)||{})
 const custoFicha = pid => custoItens(FICHAS[pid]||[]);
 function podeProduzir(pid){ const f=FICHAS[pid]||[]; if(!f.length) return Infinity;   // RF-127: quanto dá pra produzir com o estoque atual
   return Math.min(...f.map(([iid,q])=>{ const it=itemEst(iid); return it?Math.floor(it.saldo/q):0; })); }
+const semEstoque = pid => podeProduzir(pid) < 1;   // sem insumo pra produzir nem 1 unidade
+function faltaEstoqueCart(){ const m=consumoDaOrder({itens:state.cart.itens});   // insumo insuficiente pro carrinho todo
+  for (const iid of Object.keys(m)){ const it=itemEst(Number(iid)); if(it && m[iid]>it.saldo) return it.nome; } return null; }
 state.falhas = [
   {id:1,plataforma:"99Food",externoId:"B7-1102",t:T-5*MIN,erro:"Plataforma não respondeu (tempo esgotado)",itens:[item(3,1,[["molhos","Ketchup"]],["Tomate"]),item(11,1)],status:"pendente",resultado:""},
   {id:2,plataforma:"iFood",externoId:"7821",t:T-17*MIN,erro:"Pedido reenviado pela plataforma",itens:[item(7,2,[["molhos","Ketchup"]],[]),item(9,1)],status:"pendente",resultado:""}
@@ -819,8 +822,10 @@ function renderPDV(){
   const cats = CATS.map(c=>'<button data-act="cat" data-v="'+c+'" aria-pressed="'+(!q && state.cat===c)+'">'+c+'</button>').join("");
   const prods = list.length ? list.map(p=>{
     const n = state.cart.itens.filter(i=>i.prodId===p.id).reduce((s,i)=>s+i.qty,0);
-    const sub = p.indisponivel ? "Indisponível no momento" : (p.grupos.includes("bebidaCombo") ? "Escolher bebida e molho" : (p.grupos.length ? "Escolher molho e adicionais" : (p.remover.length?"Pode retirar ingredientes":"")));
-    return '<button data-act="addprod" data-v="'+p.id+'"'+(p.indisponivel?' disabled':'')+'>'+
+    const semest = !p.indisponivel && semEstoque(p.id);
+    const bloq = p.indisponivel || semest;
+    const sub = p.indisponivel ? "Indisponível no momento" : semest ? "Sem estoque para produzir" : (p.grupos.includes("bebidaCombo") ? "Escolher bebida e molho" : (p.grupos.length ? "Escolher molho e adicionais" : (p.remover.length?"Pode retirar ingredientes":"")));
+    return '<button data-act="addprod" data-v="'+p.id+'"'+(bloq?' disabled':'')+'>'+
       '<span class="info"><span class="nm">'+esc(p.nome)+'</span>'+(sub?'<span class="sub">'+sub+'</span>':'')+(n?'<span class="incart">'+n+' no pedido</span>':'')+'</span>'+
       '<span class="pr">'+brl(p.preco)+'</span><span class="plus" aria-hidden="true">+</span></button>';
   }).join("") : '<div class="empty">Nenhum produto encontrado para "'+esc(state.busca)+'".</div>';
@@ -1509,8 +1514,10 @@ document.addEventListener("click",ev=>{
     case "confirmdesc": { const sub=cartSub(), val = m.tipo==="%" ? r2(sub*parseMoney(m.valor)/100) : parseMoney(m.valor);
       state.cart.desconto={valor:val,motivo:m.motivo.trim(),por:state.user.nome}; state.sheet=voltar(m); flash("Desconto de "+brl(val)+" aplicado por "+state.user.nome+"."); break; }
     case "rmdesc": state.cart.desconto=null; break;
-    case "enviar": { const o=criarPedido(); state.sheet=null; flash("Pedido #"+o.id+" enviado para a cozinha."+(o.origem==="Mesa/comanda"?" Lançado na conta da mesa "+o.mesa+".":"")+impresso()); break; }
-    case "pagarantes": state.sheet={type:"pag",draft:true,linhas:[{forma:"Dinheiro",valor:fmtIn(cartTotal()),recebido:""}]}; break;
+    case "enviar": { const falta=faltaEstoqueCart(); if(falta){ flash("Estoque insuficiente de "+falta+". Ajuste o pedido ou reponha o estoque."); break; }
+      const o=criarPedido(); state.sheet=null; flash("Pedido #"+o.id+" enviado para a cozinha."+(o.origem==="Mesa/comanda"?" Lançado na conta da mesa "+o.mesa+".":"")+impresso()); break; }
+    case "pagarantes": { const falta=faltaEstoqueCart(); if(falta){ flash("Estoque insuficiente de "+falta+". Ajuste o pedido ou reponha o estoque."); break; }
+      state.sheet={type:"pag",draft:true,linhas:[{forma:"Dinheiro",valor:fmtIn(cartTotal()),recebido:""}]}; break; }
     case "mqty": m.qty=Math.max(1,m.qty+Number(el.dataset.d)); break;
     case "close": state.sheet = voltar(m); break;
     case "confirmitem": {
