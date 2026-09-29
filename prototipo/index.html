@@ -498,6 +498,12 @@ const FICHAS = {
 };
 const ADIC_ESTOQUE = {"Bacon":{itemId:3,qtd:20},"Cheddar":{itemId:4,qtd:1},"Salsicha extra":{itemId:5,qtd:1},"Hambúrguer extra":{itemId:2,qtd:1}};
 const REM_ESTOQUE = {};  // ponytail: só remoções ligadas a item de estoque afetam consumo (RN-071A parcial)
+const FORNECEDORES = [
+  {id:1,nome:"Distribuidora Central",contato:"(91) 3222-0000"},
+  {id:2,nome:"Frigorífico Pará",contato:"(91) 98888-1111"},
+  {id:3,nome:"Bebidas do Norte",contato:"(91) 3333-2222"}
+];
+const fornec = id => FORNECEDORES.find(f=>f.id===id);
 const personalizavel = p => p.grupos.length || p.remover.length;
 
 function item(prodId,qty,escolhas,remocoes,obs){
@@ -948,7 +954,7 @@ function renderFechamento(){
 function renderEstoque(){
   const tabs=[["itens","Itens"],["fichas","Fichas técnicas"],["compras","Compras"],["inventario","Inventário"],["demanda","Demanda"],["perdas","Perdas"],["relatorio","Relatório"]];
   const sub=subtabs(state.estoqueTab,"esttab",tabs);
-  const F={itens:renderEstItens,fichas:renderFichas};
+  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras};
   const body = F[state.estoqueTab] ? F[state.estoqueTab]() : '<div class="pad"><p class="empty">Em construção nesta etapa do protótipo.</p></div>';
   return '<div class="page-h"><h1>Estoque</h1></div><section class="panel">'+sub+body+'</section>';
 }
@@ -1019,6 +1025,38 @@ function sheetMovManual(m){
     (ajuste?'<label class="field"><span>Justificativa (obrigatória)</span><input type="text" id="em-just" data-act="emjust" placeholder="Ex.: correção de contagem" value="'+esc(m.just)+'"></label>':'')+
     (preview?'<p class="small muted">'+preview+'</p>':'');
   return sheetFrame('Movimentar — '+esc(it.nome),body,'<button class="btn primary lg block" data-act="confirmmov"'+(ok?'':' disabled')+'>Registrar '+m.tipo.toLowerCase()+'</button>',it.un);
+}
+function renderCompras(){
+  const suger=ITENS_ESTOQUE.filter(i=>i.ativo && i.saldo<=i.minimo);
+  const sug = suger.length ? '<div class="pad" style="padding-bottom:0"><div class="row"><h3>Sugestão de compra</h3><button class="btn sm" data-act="gerarcompra">Gerar compra</button></div><p class="small muted">Itens no ou abaixo do mínimo (RF-140).</p></div><ul class="plain-list">'+
+    suger.map(i=>'<li><div class="l1"><span>'+esc(i.nome)+'</span><span class="num">comprar '+r2(i.minimo*2-i.saldo)+' '+i.un+'</span></div><div class="l1 small muted"><span>Saldo '+i.saldo+' · mínimo '+i.minimo+'</span></div></li>').join("")+'</ul>' : '';
+  const compras = state.compras.slice().sort((a,b)=>b.t-a.t).map(c=>{ const f=fornec(c.fornecedorId), tot=c.itens.reduce((s,x)=>s+x[1]*x[2],0);
+    return '<li><div class="l1"><span style="font-weight:500">'+esc(f?f.nome:"—")+'</span><span class="num">'+brl(r2(tot))+'</span></div>'+
+      '<div class="l1 small"><span class="muted">'+c.itens.length+(c.itens.length>1?' itens · ':' item · ')+hhmm(c.t)+'</span><span class="st '+(c.status==="Recebida"?'pago':'pend')+'">'+c.status+'</span></div>'+
+      (c.status==="Registrada"?'<div class="l2"><span></span><button class="btn primary sm" data-act="recebercompra" data-v="'+c.id+'">Receber no estoque</button></div>':'')+'</li>'; }).join("");
+  return sug+
+    '<div class="pad" style="padding-bottom:0'+(sug?';border-top:1px solid var(--line)':'')+'"><div class="row"><h3>Compras</h3><span style="display:flex;gap:8px"><button class="btn sm" data-act="novofornecedor">Fornecedor</button><button class="btn sm" data-act="novacompra">Registrar compra</button></span></div></div>'+
+    '<ul class="plain-list">'+(compras||'<li class="empty">Nenhuma compra registrada.</li>')+'</ul>';
+}
+function sheetCompra(m){
+  const rows=m.itens.map(([iid,q,p],i)=>{ const it=itemEst(iid); if(!it)return"";
+    return '<div class="payline"><div class="row"><span style="font-weight:500">'+esc(it.nome)+' <span class="small muted">('+it.un+')</span></span><button class="btn text red" data-act="crem" data-i="'+i+'">Remover</button></div>'+
+      '<div class="row" style="gap:10px"><label class="field" style="flex:1"><span>Qtd</span><input type="text" id="cq-'+i+'" data-act="cqtd" data-i="'+i+'" inputmode="decimal" value="'+esc(String(q))+'" class="num"></label>'+
+      '<label class="field" style="flex:1"><span>Preço unit. (R$)</span><input type="text" id="cp-'+i+'" data-act="cpreco" data-i="'+i+'" inputmode="decimal" value="'+esc(fmtIn(p))+'" class="num"></label></div>'+
+      '<div class="row small muted"><span>Subtotal</span><span class="num">'+brl(r2(q*p))+'</span></div></div>'; }).join("");
+  const usados=m.itens.map(x=>x[0]), disp=ITENS_ESTOQUE.filter(i=>i.ativo && !usados.includes(i.id));
+  const add=disp.length?'<label class="field"><span>Adicionar item</span><select id="c-add" data-act="cadd"><option value="">Escolher…</option>'+disp.map(i=>'<option value="'+i.id+'">'+esc(i.nome)+'</option>').join("")+'</select></label>':'';
+  const forn='<label class="field"><span>Fornecedor</span><select id="c-forn" data-act="cforn">'+FORNECEDORES.map(f=>'<option value="'+f.id+'"'+(m.fornId===f.id?' selected':'')+'>'+esc(f.nome)+'</option>').join("")+'</select></label>';
+  const tot=m.itens.reduce((s,x)=>s+x[1]*x[2],0);
+  const ok=m.fornId && m.itens.length && m.itens.every(x=>x[1]>0&&x[2]>0);
+  const body=forn+(rows||'<p class="small muted">Adicione itens à compra.</p>')+add+'<div class="sumbox"><div class="row"><span>Total</span><span class="big num">'+brl(r2(tot))+'</span></div></div>';
+  return sheetFrame('Registrar compra',body,'<button class="btn primary lg block" data-act="confirmcompra"'+(ok?'':' disabled')+'>Registrar compra</button>');
+}
+function sheetForn(m){
+  const ok=m.nome.trim();
+  const body='<label class="field"><span>Nome</span><input type="text" id="fn-nome" data-act="fnnome" value="'+esc(m.nome)+'" autocomplete="off"></label>'+
+    '<label class="field"><span>Contato</span><input type="text" id="fn-cont" data-act="fncontato" value="'+esc(m.contato)+'" autocomplete="off"></label>';
+  return sheetFrame('Cadastrar fornecedor',body,'<button class="btn primary lg block" data-act="confirmforn"'+(ok?'':' disabled')+'>Cadastrar</button>');
 }
 function renderGestao(){
   const sub = subtabs(state.gestaoTab,"gtab",[["relatorios","Relatórios"],["integracoes","Integrações"],["config","Configurações"],["usuarios","Usuários"]]);
@@ -1102,6 +1140,8 @@ function renderSheet(){
   if (m.type==="estitem") return sheetItemEst(m);
   if (m.type==="estmov") return sheetMovManual(m);
   if (m.type==="ficha") return sheetFicha(m);
+  if (m.type==="compra") return sheetCompra(m);
+  if (m.type==="forn") return sheetForn(m);
   return "";
 }
 function sheetMesa(m){
@@ -1292,7 +1332,7 @@ document.addEventListener("click",ev=>{
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   if (a==="closebg"){ if (ev.target===el){ state.sheet=voltar(state.sheet); render(); } return; }
-  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd"].includes(a)) return;
+  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato"].includes(a)) return;
   ev.preventDefault();
   const m = state.sheet;
   switch(a){
@@ -1324,6 +1364,15 @@ document.addEventListener("click",ev=>{
     case "editarficha": state.sheet={type:"ficha",prodId:Number(v),itens:(FICHAS[Number(v)]||[]).map(x=>x.slice())}; break;
     case "frem": m.itens.splice(Number(el.dataset.i),1); break;
     case "confirmficha": FICHAS[m.prodId]=m.itens.filter(x=>x[1]>0); state.sheet=null; flash("Ficha de "+prod(m.prodId).nome+" salva."); break;
+    case "novacompra": state.sheet={type:"compra",fornId:FORNECEDORES[0].id,itens:[]}; break;
+    case "gerarcompra": state.sheet={type:"compra",fornId:FORNECEDORES[0].id,itens:ITENS_ESTOQUE.filter(i=>i.ativo&&i.saldo<=i.minimo).map(i=>[i.id,r2(i.minimo*2-i.saldo),i.custo])}; break;
+    case "crem": m.itens.splice(Number(el.dataset.i),1); break;
+    case "confirmcompra": state.compras.push({id:state.nextCompra++,fornecedorId:m.fornId,itens:m.itens.map(x=>x.slice()),status:"Registrada",t:now()}); state.sheet=null; flash("Compra registrada. Receba para dar entrada no estoque."); break;
+    case "recebercompra": { const c=state.compras.find(x=>x.id===Number(v)); if(!c||c.status==="Recebida")break;
+      c.itens.forEach(([iid,q,p])=>{ movimentar(iid,"Entrada","Compra",q,{compra:c.id,precoUnit:p}); const it=itemEst(iid); if(it) it.custo=p; }); // RF-137/139
+      c.status="Recebida"; c.recebidaEm=now(); flash("Compra recebida. Estoque atualizado."); break; }
+    case "novofornecedor": state.sheet={type:"forn",nome:"",contato:""}; break;
+    case "confirmforn": FORNECEDORES.push({id:Math.max(0,...FORNECEDORES.map(f=>f.id))+1,nome:m.nome.trim(),contato:m.contato.trim()}); state.sheet=null; flash("Fornecedor cadastrado."); break;
     case "goint": state.screen="gestao"; state.gestaoTab="integracoes"; window.scrollTo(0,0); break;
     case "cat": state.cat=v; state.busca=""; break;
     case "addprod": {
@@ -1446,6 +1495,8 @@ document.addEventListener("change",ev=>{
   else if (a==="uperfil"){ m.perfil = el.dataset.v; }
   else if (a==="eiun"){ m.un = el.value; }
   else if (a==="fadd"){ const id=Number(el.value); if(id && !m.itens.some(x=>x[0]===id)) m.itens.push([id,1]); }
+  else if (a==="cforn"){ m.fornId=Number(el.value); }
+  else if (a==="cadd"){ const id=Number(el.value); if(id && !m.itens.some(x=>x[0]===id)) m.itens.push([id,1,(itemEst(id)||{}).custo||0]); }
   else if (a==="opt"){
     const g = el.dataset.g, G = GRUPOS[g], sel = m.sel[g] = m.sel[g]||[];
     if (G.max===1) m.sel[g]=[el.dataset.v];
@@ -1482,6 +1533,10 @@ document.addEventListener("input",ev=>{
   else if (a==="emvalor") m.valor = el.value;
   else if (a==="emjust") m.just = el.value;
   else if (a==="fqtd") { m.itens[Number(el.dataset.i)][1] = parseMoney(el.value); }
+  else if (a==="cqtd") { m.itens[Number(el.dataset.i)][1] = parseMoney(el.value); }
+  else if (a==="cpreco") { m.itens[Number(el.dataset.i)][2] = parseMoney(el.value); }
+  else if (a==="fnnome") m.nome = el.value;
+  else if (a==="fncontato") m.contato = el.value;
   else return;
   render();
 });
