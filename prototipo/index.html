@@ -582,6 +582,8 @@ function consumoDaOrder(o){ const m={};
 function baixaVenda(o){ if(o.baixado) return; o.baixado=true;   // RN-066 / RNF-011: uma venda, uma baixa
   const m=consumoDaOrder(o); Object.keys(m).forEach(iid=>{ if(m[iid]>0) movimentar(Number(iid),"Saída","Venda",m[iid],{pedido:o.id}); });
 }
+const custoItens = itens => r2(itens.reduce((s,[iid,q])=>s+q*((itemEst(iid)||{}).custo||0),0));  // RF-124 / RN-071
+const custoFicha = pid => custoItens(FICHAS[pid]||[]);
 state.falhas = [
   {id:1,plataforma:"99Food",externoId:"B7-1102",t:T-5*MIN,erro:"Plataforma não respondeu (tempo esgotado)",itens:[item(3,1,[["molhos","Ketchup"]],["Tomate"]),item(11,1)],status:"pendente",resultado:""},
   {id:2,plataforma:"iFood",externoId:"7821",t:T-17*MIN,erro:"Pedido reenviado pela plataforma",itens:[item(7,2,[["molhos","Ketchup"]],[]),item(9,1)],status:"pendente",resultado:""}
@@ -946,7 +948,8 @@ function renderFechamento(){
 function renderEstoque(){
   const tabs=[["itens","Itens"],["fichas","Fichas técnicas"],["compras","Compras"],["inventario","Inventário"],["demanda","Demanda"],["perdas","Perdas"],["relatorio","Relatório"]];
   const sub=subtabs(state.estoqueTab,"esttab",tabs);
-  const body = state.estoqueTab==="itens" ? renderEstItens() : '<div class="pad"><p class="empty">Em construção nesta etapa do protótipo.</p></div>';
+  const F={itens:renderEstItens,fichas:renderFichas};
+  const body = F[state.estoqueTab] ? F[state.estoqueTab]() : '<div class="pad"><p class="empty">Em construção nesta etapa do protótipo.</p></div>';
   return '<div class="page-h"><h1>Estoque</h1></div><section class="panel">'+sub+body+'</section>';
 }
 function renderEstItens(){
@@ -981,6 +984,29 @@ function sheetItemEst(m){
     '<label class="field"><span>Custo unitário (R$)</span><input type="text" id="ei-custo" data-act="eicusto" inputmode="decimal" value="'+esc(m.custo)+'" class="num"></label>'+
     (m.id?'':'<label class="field"><span>Saldo inicial ('+m.un+')</span><input type="text" id="ei-saldo" data-act="eisaldo" inputmode="decimal" value="'+esc(m.saldo)+'" class="num"></label>');
   return sheetFrame(m.id?'Editar item':'Cadastrar item',body,'<button class="btn primary lg block" data-act="confirmitemest"'+(ok?'':' disabled')+'>'+(m.id?'Salvar':'Cadastrar')+'</button>');
+}
+function renderFichas(){
+  const rows=PRODUTOS.map(p=>{ const c=custoFicha(p.id), tem=(FICHAS[p.id]||[]).length, marg=r2(p.preco-c);
+    return '<li><button class="rowbtn" data-act="editarficha" data-v="'+p.id+'">'+
+      '<span class="l1"><span style="font-weight:500">'+esc(p.nome)+'</span><span class="num">'+brl(p.preco)+'</span></span>'+
+      '<span class="l1 small"><span class="muted">'+(tem?'Custo '+brl(c)+' · margem '+brl(marg):'Sem ficha técnica')+'</span>'+(tem?'<span class="muted num">'+Math.round(marg/p.preco*100)+'%</span>':'<span class="st pend">Definir</span>')+'</span></button></li>'; }).join("");
+  return '<div class="pad" style="padding-bottom:0"><h3>Fichas técnicas</h3><p class="small muted">Ingredientes de cada produto. O custo é a soma insumo × quantidade; a venda baixa por aqui.</p></div>'+
+    '<ul class="plain-list tap">'+rows+'</ul>';
+}
+function sheetFicha(m){
+  const p=prod(m.prodId);
+  const rows=m.itens.map(([iid,q],i)=>{ const it=itemEst(iid); if(!it) return "";
+    return '<div class="row" style="gap:10px;align-items:center"><span style="flex:1">'+esc(it.nome)+' <span class="small muted">('+it.un+')</span></span>'+
+      '<input type="text" id="fq-'+i+'" data-act="fqtd" data-i="'+i+'" inputmode="decimal" value="'+esc(String(q))+'" class="num" style="width:96px;text-align:right">'+
+      '<button class="btn text red" data-act="frem" data-i="'+i+'" aria-label="Remover">'+ICON.trash+'</button></div>'; }).join("");
+  const usados=m.itens.map(x=>x[0]), disp=ITENS_ESTOQUE.filter(i=>i.ativo && !usados.includes(i.id));
+  const add= disp.length ? '<label class="field"><span>Adicionar ingrediente</span><select id="f-add" data-act="fadd"><option value="">Escolher…</option>'+disp.map(i=>'<option value="'+i.id+'">'+esc(i.nome)+' ('+i.un+')</option>').join("")+'</select></label>' : '';
+  const custo=custoItens(m.itens);
+  const body=(rows||'<p class="small muted">Nenhum ingrediente. Adicione abaixo.</p>')+add+
+    '<div class="sumbox"><div class="row"><span>Custo estimado</span><span class="big num">'+brl(custo)+'</span></div>'+
+      '<div class="row small muted"><span>Preço de venda</span><span class="num">'+brl(p.preco)+'</span></div>'+
+      '<div class="row small muted"><span>Margem</span><span class="num">'+brl(r2(p.preco-custo))+'</span></div></div>';
+  return sheetFrame('Ficha — '+esc(p.nome),body,'<button class="btn primary lg block" data-act="confirmficha">Salvar ficha</button>',brl(p.preco));
 }
 function sheetMovManual(m){
   const it=itemEst(m.itemId), val=parseMoney(m.valor), ajuste=m.tipo==="Ajuste";
@@ -1075,6 +1101,7 @@ function renderSheet(){
   if (m.type==="estdet") return sheetItemDet(m);
   if (m.type==="estitem") return sheetItemEst(m);
   if (m.type==="estmov") return sheetMovManual(m);
+  if (m.type==="ficha") return sheetFicha(m);
   return "";
 }
 function sheetMesa(m){
@@ -1265,7 +1292,7 @@ document.addEventListener("click",ev=>{
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   if (a==="closebg"){ if (ev.target===el){ state.sheet=voltar(state.sheet); render(); } return; }
-  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust"].includes(a)) return;
+  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd"].includes(a)) return;
   ev.preventDefault();
   const m = state.sheet;
   switch(a){
@@ -1294,6 +1321,9 @@ document.addEventListener("click",ev=>{
       const origem = m.tipo==="Entrada"?"Entrada manual":m.tipo==="Saída"?"Saída manual":"Ajuste manual";
       movimentar(m.itemId,m.tipo,origem,val,{justificativa:m.just.trim()});
       state.sheet={type:"estdet",itemId:m.itemId}; flash(m.tipo+" registrada em "+it.nome+"."); break; }
+    case "editarficha": state.sheet={type:"ficha",prodId:Number(v),itens:(FICHAS[Number(v)]||[]).map(x=>x.slice())}; break;
+    case "frem": m.itens.splice(Number(el.dataset.i),1); break;
+    case "confirmficha": FICHAS[m.prodId]=m.itens.filter(x=>x[1]>0); state.sheet=null; flash("Ficha de "+prod(m.prodId).nome+" salva."); break;
     case "goint": state.screen="gestao"; state.gestaoTab="integracoes"; window.scrollTo(0,0); break;
     case "cat": state.cat=v; state.busca=""; break;
     case "addprod": {
@@ -1415,6 +1445,7 @@ document.addEventListener("change",ev=>{
   else if (a==="cfgprint"){ state.cfg.autoPrint = el.checked; }
   else if (a==="uperfil"){ m.perfil = el.dataset.v; }
   else if (a==="eiun"){ m.un = el.value; }
+  else if (a==="fadd"){ const id=Number(el.value); if(id && !m.itens.some(x=>x[0]===id)) m.itens.push([id,1]); }
   else if (a==="opt"){
     const g = el.dataset.g, G = GRUPOS[g], sel = m.sel[g] = m.sel[g]||[];
     if (G.max===1) m.sel[g]=[el.dataset.v];
@@ -1450,6 +1481,7 @@ document.addEventListener("input",ev=>{
   else if (a==="eisaldo") m.saldo = el.value;
   else if (a==="emvalor") m.valor = el.value;
   else if (a==="emjust") m.just = el.value;
+  else if (a==="fqtd") { m.itens[Number(el.dataset.i)][1] = parseMoney(el.value); }
   else return;
   render();
 });
