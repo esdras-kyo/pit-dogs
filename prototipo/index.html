@@ -954,7 +954,7 @@ function renderFechamento(){
 function renderEstoque(){
   const tabs=[["itens","Itens"],["fichas","Fichas técnicas"],["compras","Compras"],["inventario","Inventário"],["demanda","Demanda"],["perdas","Perdas"],["relatorio","Relatório"]];
   const sub=subtabs(state.estoqueTab,"esttab",tabs);
-  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras};
+  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras,inventario:renderInventario};
   const body = F[state.estoqueTab] ? F[state.estoqueTab]() : '<div class="pad"><p class="empty">Em construção nesta etapa do protótipo.</p></div>';
   return '<div class="page-h"><h1>Estoque</h1></div><section class="panel">'+sub+body+'</section>';
 }
@@ -1025,6 +1025,25 @@ function sheetMovManual(m){
     (ajuste?'<label class="field"><span>Justificativa (obrigatória)</span><input type="text" id="em-just" data-act="emjust" placeholder="Ex.: correção de contagem" value="'+esc(m.just)+'"></label>':'')+
     (preview?'<p class="small muted">'+preview+'</p>':'');
   return sheetFrame('Movimentar — '+esc(it.nome),body,'<button class="btn primary lg block" data-act="confirmmov"'+(ok?'':' disabled')+'>Registrar '+m.tipo.toLowerCase()+'</button>',it.un);
+}
+function difTxtQtd(d,un){ if(d===0) return "Sem diferença"; return (d>0?"Sobra ":"Falta ")+Math.abs(d)+" "+un; }
+function renderInventario(){
+  const aberto = state.inventarios.find(i=>i.status==="Em contagem");
+  if (aberto) return renderInvContagem(aberto);
+  const hist = state.inventarios.filter(i=>i.status==="Concluído").slice().reverse();
+  return '<div class="pad" style="padding-bottom:0"><div class="row"><h3>Inventário</h3><button class="btn primary sm" data-act="inviniciar">Iniciar contagem</button></div>'+
+    '<p class="small muted">Conta o físico e compara com o teórico. Só diferenças aprovadas geram ajuste (RN-083).</p></div>'+
+    '<ul class="plain-list">'+(hist.map(i=>'<li><div class="l1"><span style="font-weight:500">Inventário #'+i.id+'</span><span class="small muted">'+hhmm(i.concluidoEm)+'</span></div><div class="l1 small muted"><span>'+i.itens.length+' itens contados · '+i.itens.filter(x=>x.aprovado&&r2(parseMoney(x.fisica)-x.teorico)!==0).length+' ajustes gerados</span></div></li>').join("")||'<li class="empty">Nenhum inventário concluído.</li>')+'</ul>';
+}
+function renderInvContagem(inv){
+  const rows=inv.itens.map((x,idx)=>{ const it=itemEst(x.itemId), dif=x.fisica===""?null:r2(parseMoney(x.fisica)-x.teorico);
+    const chk = (dif!==null&&dif!==0)?' <label style="margin-left:8px;white-space:nowrap"><input type="checkbox" data-act="ivap" data-i="'+idx+'"'+(x.aprovado?' checked':'')+'> aprovar ajuste</label>':'';
+    return '<div class="fech-row"><div><div style="font-weight:500">'+esc(it.nome)+'</div><div class="small muted">Teórico '+x.teorico+' '+it.un+'</div></div>'+
+      '<input type="text" id="iv-'+idx+'" data-act="ivfis" data-i="'+idx+'" inputmode="decimal" placeholder="Físico" value="'+esc(x.fisica)+'" aria-label="Físico '+esc(it.nome)+'">'+
+      '<div class="dif '+(x.fisica===""?'muted':difCls(dif))+'">'+(x.fisica===""?'Informe a contagem':difTxtQtd(dif,it.un)+chk)+'</div></div>'; }).join("");
+  const faltam=inv.itens.some(x=>x.fisica==="");
+  return '<div class="pad" style="padding-bottom:0"><h3>Inventário #'+inv.id+' — em contagem</h3><p class="small muted">Informe a quantidade física de cada item.</p></div>'+
+    rows+'<div class="pad"><button class="btn primary lg block" data-act="invconcluir"'+(faltam?' disabled':'')+'>Concluir inventário</button>'+(faltam?'<p class="small muted">Informe todos os itens para concluir.</p>':'')+'</div>';
 }
 function renderCompras(){
   const suger=ITENS_ESTOQUE.filter(i=>i.ativo && i.saldo<=i.minimo);
@@ -1332,7 +1351,7 @@ document.addEventListener("click",ev=>{
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   if (a==="closebg"){ if (ev.target===el){ state.sheet=voltar(state.sheet); render(); } return; }
-  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato"].includes(a)) return;
+  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato","ivfis","ivap"].includes(a)) return;
   ev.preventDefault();
   const m = state.sheet;
   switch(a){
@@ -1373,6 +1392,12 @@ document.addEventListener("click",ev=>{
       c.status="Recebida"; c.recebidaEm=now(); flash("Compra recebida. Estoque atualizado."); break; }
     case "novofornecedor": state.sheet={type:"forn",nome:"",contato:""}; break;
     case "confirmforn": FORNECEDORES.push({id:Math.max(0,...FORNECEDORES.map(f=>f.id))+1,nome:m.nome.trim(),contato:m.contato.trim()}); state.sheet=null; flash("Fornecedor cadastrado."); break;
+    case "inviniciar": { const id=Math.max(0,...state.inventarios.map(i=>i.id))+1;
+      state.inventarios.push({id,itens:ITENS_ESTOQUE.filter(i=>i.ativo).map(it=>({itemId:it.id,teorico:it.saldo,fisica:"",aprovado:false})),status:"Em contagem",iniciadoEm:now()});
+      flash("Inventário #"+id+" iniciado."); break; }
+    case "invconcluir": { const inv=state.inventarios.find(i=>i.status==="Em contagem"); if(!inv)break;
+      inv.itens.forEach(x=>{ const dif=r2(parseMoney(x.fisica)-x.teorico); if(x.aprovado && dif!==0) movimentar(x.itemId,"Ajuste","Inventário",parseMoney(x.fisica),{justificativa:"Inventário #"+inv.id}); }); // RN-083/084
+      inv.status="Concluído"; inv.concluidoEm=now(); flash("Inventário #"+inv.id+" concluído."); break; }
     case "goint": state.screen="gestao"; state.gestaoTab="integracoes"; window.scrollTo(0,0); break;
     case "cat": state.cat=v; state.busca=""; break;
     case "addprod": {
@@ -1497,6 +1522,7 @@ document.addEventListener("change",ev=>{
   else if (a==="fadd"){ const id=Number(el.value); if(id && !m.itens.some(x=>x[0]===id)) m.itens.push([id,1]); }
   else if (a==="cforn"){ m.fornId=Number(el.value); }
   else if (a==="cadd"){ const id=Number(el.value); if(id && !m.itens.some(x=>x[0]===id)) m.itens.push([id,1,(itemEst(id)||{}).custo||0]); }
+  else if (a==="ivap"){ const inv=state.inventarios.find(i=>i.status==="Em contagem"); if(inv) inv.itens[Number(el.dataset.i)].aprovado=el.checked; }
   else if (a==="opt"){
     const g = el.dataset.g, G = GRUPOS[g], sel = m.sel[g] = m.sel[g]||[];
     if (G.max===1) m.sel[g]=[el.dataset.v];
@@ -1537,6 +1563,7 @@ document.addEventListener("input",ev=>{
   else if (a==="cpreco") { m.itens[Number(el.dataset.i)][2] = parseMoney(el.value); }
   else if (a==="fnnome") m.nome = el.value;
   else if (a==="fncontato") m.contato = el.value;
+  else if (a==="ivfis"){ const inv=state.inventarios.find(i=>i.status==="Em contagem"); if(inv){ const x=inv.itens[Number(el.dataset.i)]; x.fisica=el.value; if(r2(parseMoney(el.value)-x.teorico)===0) x.aprovado=false; } }
   else return;
   render();
 });
