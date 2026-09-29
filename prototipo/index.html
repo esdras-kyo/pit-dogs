@@ -590,6 +590,8 @@ function baixaVenda(o){ if(o.baixado) return; o.baixado=true;   // RN-066 / RNF-
 }
 const custoItens = itens => r2(itens.reduce((s,[iid,q])=>s+q*((itemEst(iid)||{}).custo||0),0));  // RF-124 / RN-071
 const custoFicha = pid => custoItens(FICHAS[pid]||[]);
+function podeProduzir(pid){ const f=FICHAS[pid]||[]; if(!f.length) return Infinity;   // RF-127: quanto dá pra produzir com o estoque atual
+  return Math.min(...f.map(([iid,q])=>{ const it=itemEst(iid); return it?Math.floor(it.saldo/q):0; })); }
 state.falhas = [
   {id:1,plataforma:"99Food",externoId:"B7-1102",t:T-5*MIN,erro:"Plataforma não respondeu (tempo esgotado)",itens:[item(3,1,[["molhos","Ketchup"]],["Tomate"]),item(11,1)],status:"pendente",resultado:""},
   {id:2,plataforma:"iFood",externoId:"7821",t:T-17*MIN,erro:"Pedido reenviado pela plataforma",itens:[item(7,2,[["molhos","Ketchup"]],[]),item(9,1)],status:"pendente",resultado:""}
@@ -954,7 +956,7 @@ function renderFechamento(){
 function renderEstoque(){
   const tabs=[["itens","Itens"],["fichas","Fichas técnicas"],["compras","Compras"],["inventario","Inventário"],["demanda","Demanda"],["perdas","Perdas"],["relatorio","Relatório"]];
   const sub=subtabs(state.estoqueTab,"esttab",tabs);
-  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras,inventario:renderInventario};
+  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras,inventario:renderInventario,demanda:renderDemanda};
   const body = F[state.estoqueTab] ? F[state.estoqueTab]() : '<div class="pad"><p class="empty">Em construção nesta etapa do protótipo.</p></div>';
   return '<div class="page-h"><h1>Estoque</h1></div><section class="panel">'+sub+body+'</section>';
 }
@@ -1044,6 +1046,23 @@ function renderInvContagem(inv){
   const faltam=inv.itens.some(x=>x.fisica==="");
   return '<div class="pad" style="padding-bottom:0"><h3>Inventário #'+inv.id+' — em contagem</h3><p class="small muted">Informe a quantidade física de cada item.</p></div>'+
     rows+'<div class="pad"><button class="btn primary lg block" data-act="invconcluir"'+(faltam?' disabled':'')+'>Concluir inventário</button>'+(faltam?'<p class="small muted">Informe todos os itens para concluir.</p>':'')+'</div>';
+}
+function renderDemanda(){
+  const aberto=state.planos.find(p=>p.status==="Aberto");
+  if (aberto) return renderPlano(aberto);
+  const hist=state.planos.filter(p=>p.status==="Concluído").slice().reverse();
+  return '<div class="pad" style="padding-bottom:0"><div class="row"><h3>Tirada de demanda</h3><button class="btn primary sm" data-act="demcalc">Calcular necessidade</button></div><p class="small muted">Sugere quanto produzir pelas vendas de ontem e pelo estoque disponível (RF-126–128).</p></div>'+
+    '<ul class="plain-list">'+(hist.map(p=>'<li><div class="l1"><span style="font-weight:500">Plano #'+p.id+'</span><span class="small muted">'+hhmm(p.concluidoEm)+'</span></div><div class="l1 small muted"><span>'+p.itens.length+' produtos</span></div></li>').join("")||'<li class="empty">Nenhum plano concluído.</li>')+'</ul>';
+}
+function renderPlano(p){
+  const rows=p.itens.map((x,idx)=>{ const pr=prod(x.prodId), plan=parseMoney(x.planejado), feito=x.produzido===""?null:parseMoney(x.produzido), dif=feito===null?null:r2(feito-plan);
+    return '<tr><td>'+esc(pr.nome)+'</td><td class="num">'+(x.disponivel===Infinity?"—":x.disponivel)+'</td><td class="num">'+x.sugerido+'</td>'+
+      '<td><input type="text" id="dp-'+idx+'" data-act="dmplan" data-i="'+idx+'" inputmode="numeric" value="'+esc(x.planejado)+'" class="num" style="width:70px;text-align:right"></td>'+
+      '<td><input type="text" id="dq-'+idx+'" data-act="dmprod" data-i="'+idx+'" inputmode="numeric" value="'+esc(x.produzido)+'" placeholder="—" class="num" style="width:70px;text-align:right"></td>'+
+      '<td class="'+(dif===null?'nao':difCls(dif))+'">'+(dif===null?"—":(dif>0?"+":"")+dif)+'</td></tr>'; }).join("");
+  return '<div class="pad" style="padding-bottom:0"><h3>Plano de produção #'+p.id+'</h3><p class="small muted">Ajuste o planejado e registre o produzido (RF-131/133).</p></div>'+
+    '<div class="tbl-wrap"><table><thead><tr><th>Produto</th><th>Disp.</th><th>Sugerido</th><th>Planejado</th><th>Produzido</th><th>Dif.</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div class="pad"><button class="btn primary lg block" data-act="demconcluir">Concluir plano</button></div>';
 }
 function renderCompras(){
   const suger=ITENS_ESTOQUE.filter(i=>i.ativo && i.saldo<=i.minimo);
@@ -1351,7 +1370,7 @@ document.addEventListener("click",ev=>{
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   if (a==="closebg"){ if (ev.target===el){ state.sheet=voltar(state.sheet); render(); } return; }
-  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato","ivfis","ivap"].includes(a)) return;
+  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust","fqtd","fadd","cforn","cadd","cqtd","cpreco","fnnome","fncontato","ivfis","ivap","dmplan","dmprod"].includes(a)) return;
   ev.preventDefault();
   const m = state.sheet;
   switch(a){
@@ -1398,6 +1417,11 @@ document.addEventListener("click",ev=>{
     case "invconcluir": { const inv=state.inventarios.find(i=>i.status==="Em contagem"); if(!inv)break;
       inv.itens.forEach(x=>{ const dif=r2(parseMoney(x.fisica)-x.teorico); if(x.aprovado && dif!==0) movimentar(x.itemId,"Ajuste","Inventário",parseMoney(x.fisica),{justificativa:"Inventário #"+inv.id}); }); // RN-083/084
       inv.status="Concluído"; inv.concluidoEm=now(); flash("Inventário #"+inv.id+" concluído."); break; }
+    case "demcalc": { const cont={}; VENDAS.ontem.filter(v=>!v.cancelado).forEach(v=>v.itens.forEach(i=>{cont[i.nome]=(cont[i.nome]||0)+i.qty;}));
+      const itens=PRODUTOS.filter(p=>(FICHAS[p.id]||[]).length && (cont[p.nome]||0)>0).map(p=>({prodId:p.id,sugerido:cont[p.nome],disponivel:podeProduzir(p.id),planejado:String(cont[p.nome]),produzido:""}));
+      const id=Math.max(0,...state.planos.map(p=>p.id))+1; state.planos.push({id,itens,status:"Aberto",criadoEm:now()});
+      flash("Plano de produção #"+id+" gerado."); break; }
+    case "demconcluir": { const p=state.planos.find(x=>x.status==="Aberto"); if(!p)break; p.status="Concluído"; p.concluidoEm=now(); flash("Plano #"+p.id+" concluído."); break; }
     case "goint": state.screen="gestao"; state.gestaoTab="integracoes"; window.scrollTo(0,0); break;
     case "cat": state.cat=v; state.busca=""; break;
     case "addprod": {
@@ -1564,6 +1588,8 @@ document.addEventListener("input",ev=>{
   else if (a==="fnnome") m.nome = el.value;
   else if (a==="fncontato") m.contato = el.value;
   else if (a==="ivfis"){ const inv=state.inventarios.find(i=>i.status==="Em contagem"); if(inv){ const x=inv.itens[Number(el.dataset.i)]; x.fisica=el.value; if(r2(parseMoney(el.value)-x.teorico)===0) x.aprovado=false; } }
+  else if (a==="dmplan"){ const p=state.planos.find(x=>x.status==="Aberto"); if(p) p.itens[Number(el.dataset.i)].planejado=el.value; }
+  else if (a==="dmprod"){ const p=state.planos.find(x=>x.status==="Aberto"); if(p) p.itens[Number(el.dataset.i)].produzido=el.value; }
   else return;
   render();
 });
