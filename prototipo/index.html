@@ -956,7 +956,7 @@ function renderFechamento(){
 function renderEstoque(){
   const tabs=[["itens","Itens"],["fichas","Fichas técnicas"],["compras","Compras"],["inventario","Inventário"],["demanda","Demanda"],["perdas","Perdas"],["relatorio","Relatório"]];
   const sub=subtabs(state.estoqueTab,"esttab",tabs);
-  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras,inventario:renderInventario,demanda:renderDemanda,perdas:renderPerdas};
+  const F={itens:renderEstItens,fichas:renderFichas,compras:renderCompras,inventario:renderInventario,demanda:renderDemanda,perdas:renderPerdas,relatorio:renderRelEstoque};
   const body = F[state.estoqueTab] ? F[state.estoqueTab]() : '<div class="pad"><p class="empty">Em construção nesta etapa do protótipo.</p></div>';
   return '<div class="page-h"><h1>Estoque</h1></div><section class="panel">'+sub+body+'</section>';
 }
@@ -1046,6 +1046,22 @@ function renderInvContagem(inv){
   const faltam=inv.itens.some(x=>x.fisica==="");
   return '<div class="pad" style="padding-bottom:0"><h3>Inventário #'+inv.id+' — em contagem</h3><p class="small muted">Informe a quantidade física de cada item.</p></div>'+
     rows+'<div class="pad"><button class="btn primary lg block" data-act="invconcluir"'+(faltam?' disabled':'')+'>Concluir inventário</button>'+(faltam?'<p class="small muted">Informe todos os itens para concluir.</p>':'')+'</div>';
+}
+function renderRelEstoque(){
+  const totalValor=r2(ITENS_ESTOQUE.reduce((s,i)=>s+i.saldo*i.custo,0));
+  const abaixo=ITENS_ESTOQUE.filter(i=>i.ativo&&i.saldo<=i.minimo);
+  const kpis='<dl class="kpis">'+[["Valor em estoque",brl(totalValor)],["Itens cadastrados",String(ITENS_ESTOQUE.filter(i=>i.ativo).length)],["Abaixo do mínimo",String(abaixo.length)]].map(([a,b])=>'<div class="kpi"><dt>'+a+'</dt><dd>'+b+'</dd></div>').join("")+'</dl>';
+  const perdaCont={}; state.movEstoque.filter(x=>x.origem==="Perda").forEach(x=>{ const it=itemEst(x.itemId); if(it) perdaCont[it.nome]=(perdaCont[it.nome]||0)+x.qtd; });
+  const perdaRows=Object.entries(perdaCont).sort((a,b)=>b[1]-a[1]).map(([n,q])=>({l:n,v:q,d:q+" un",tip:n+": "+q}));
+  const perdaChart = perdaRows.length ? bars("Perdas por item",perdaRows,"wide") : '<div class="chart"><h3>Perdas por item</h3><p class="small muted">Sem perdas no período.</p></div>';
+  const posRows=ITENS_ESTOQUE.filter(i=>i.ativo).map(i=>'<tr><td>'+esc(i.nome)+'</td><td class="num">'+i.saldo+' '+i.un+'</td><td class="num">'+i.minimo+'</td><td class="num">'+brl(r2(i.saldo*i.custo))+'</td><td>'+(i.saldo<=i.minimo?'<span class="st pend">Repor</span>':'<span class="st pago">OK</span>')+'</td></tr>').join("");
+  const pos='<div class="chart"><h3>Posição atual</h3><div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Saldo</th><th>Mínimo</th><th>Valor</th><th></th></tr></thead><tbody>'+posRows+'</tbody></table></div></div>';
+  const inv=state.inventarios.filter(i=>i.status==="Concluído").slice(-1)[0];
+  let ft;
+  if(inv){ const rows=inv.itens.map(x=>{ const it=itemEst(x.itemId), dif=r2(parseMoney(x.fisica)-x.teorico); return '<tr><td>'+esc(it?it.nome:"")+'</td><td class="num">'+x.teorico+'</td><td class="num">'+parseMoney(x.fisica)+'</td><td class="'+(dif===0?'nao':difCls(dif))+'">'+(dif>0?"+":"")+dif+'</td></tr>'; }).join("");
+    ft='<div class="chart"><h3>Físico × teórico — inventário #'+inv.id+'</h3><div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Teórico</th><th>Físico</th><th>Dif.</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  } else ft='<div class="chart"><h3>Físico × teórico</h3><p class="small muted">Conclua um inventário para comparar.</p></div>';
+  return '<div class="pad">'+kpis+'<div class="charts">'+perdaChart+pos+ft+'</div></div>';
 }
 function renderPerdas(){
   const per=state.perdasPeriodo, corte=now()-(per==="semana"?7:1)*24*60*MIN;
