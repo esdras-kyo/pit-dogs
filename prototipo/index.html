@@ -1,14 +1,14 @@
 <!doctype html><html lang="pt-BR" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Pará Lanches</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231C6E63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 10c0-3.2 3.6-5 8-5s8 1.8 8 5'/><path d='M3.5 13.5h17'/><path d='M6 17.5h12'/></svg>">
+<title>Jão Burguer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F2B01E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Libre+Franklin:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Libre+Franklin:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap">
 <style>
 :root{
-  --bg:#F5F2E6; --surface:#FDFBF5; --surface-2:#EDE8D7; --ink:#262219; --muted:#6E6656;
-  --line:#E6E0CE; --line-strong:#CEC6AE; --accent:#1C6E63; --accent-ink:#FFFFFF; --accent-soft:#DCE8E2;
-  --danger:#A63A2B; --danger-soft:#F3E1DB; --ok:#3B7A50; --ok-soft:#E3EEE2; --warn:#946A1C; --warn-soft:#F1E7CE;
-  --scrim:rgba(40,20,10,.45);
+  --bg:#F6F2EA; --surface:#FFFFFF; --surface-2:#EFEAE0; --ink:#211B15; --muted:#6E6558;
+  --line:#E6DFD2; --line-strong:#CDC3B0; --accent:#C85417; --accent-ink:#FFFFFF; --accent-soft:#F7E3D3;
+  --danger:#A32820; --danger-soft:#F4E0DC; --ok:#3E7A46; --ok-soft:#E4EEE0; --warn:#B9791A; --warn-soft:#F6EAD0;
+  --scrim:rgba(25,16,10,.5); --amber:#F2B01E;
   --sans:"Libre Franklin",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   --tabbar-h:60px; --cartbar-h:64px;
@@ -317,7 +317,7 @@ td.nao{color:var(--muted)}
   --r:12px;    /* cartões/painéis arredondados */
   --r-sm:9px;  /* botões/inputs */
   --elev:0 1px 2px rgba(60,50,30,.06), 0 6px 16px rgba(60,50,30,.07);
-  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --display:"Oswald",Impact,"Arial Narrow",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--elev:0 2px 6px rgba(0,0,0,.5)}}
 :root[data-theme="dark"]{--elev:0 2px 6px rgba(0,0,0,.5)}
@@ -326,8 +326,9 @@ td.nao{color:var(--muted)}
 body{font-size:14px}
 
 /* títulos em serifa clássica e legível; corpo em Libre Franklin */
-h1,h2,h3,.brand,.total,.sumbox .big{font-family:var(--serif);font-weight:700;letter-spacing:0}
-h1{font-size:22px} h2{font-size:18px} h3{font-size:15px} .brand{font-size:18px;font-weight:600}
+h1,h2,h3,.brand,.total,.sumbox .big{font-family:var(--display);font-weight:600;letter-spacing:.2px}
+h1{font-size:23px} h2{font-size:19px} h3{font-size:15px}
+.brand{font-size:19px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
 
 /* arredondado: cartões mais, controles um pouco menos */
 .panel,.reqs,.notice,.sumbox,.payline,.opts,.kpis,.tbl-wrap,.ticket,.mesa-card,.caixa-head,.userlist{border-radius:var(--r)}
@@ -368,11 +369,38 @@ h1,h2,h3{line-height:1.25}
 .small,.muted{line-height:1.45}
 
 /* identidade e ícones */
-.brand .mark,.login-h .mark{background:var(--accent);border:0;color:var(--accent-ink)}
-.brand .mark svg{width:16px;height:16px}
-.login-h .mark svg{width:26px;height:26px}
+.brand .mark,.login-h .mark{background:transparent;border:0;color:var(--amber)}
+.brand .mark svg{width:22px;height:22px}
+.login-h .mark svg{width:34px;height:34px}
 .btn svg{width:16px;height:16px;flex:0 0 auto}
 .btn.lg svg{width:18px;height:18px}
+
+/* ============ marca Jão Burguer: topo e login escuros (brasa) ============ */
+.appbar{background:#17120E;border-bottom-color:#2C241C}
+.appbar .brand{color:#F6F1E8}
+.appbar .topnav button{color:#B8AE9F}
+.appbar .topnav button[aria-current="page"]{color:#F6F1E8;border-bottom-color:var(--amber)}
+.appbar .userbtn b{color:#F6F1E8}
+.appbar .userbtn span{color:#B8AE9F}
+.appbar .avatar{background:#2C241C;border-color:#463A2C;color:#F6F1E8!important}
+
+body:has(.login-screen){background:#17120E}
+.login-screen{color:#F6F1E8}
+.login-screen .login-h p{color:#C3B8A6}
+.login-screen .userlist button{background:#201811;border-color:#2E251C;color:#F6F1E8}
+.login-screen .userlist button .who span{color:#B8AE9F}
+.login-screen .userlist button[aria-pressed="true"]{background:#2C2114}
+.login-screen .userlist button .radio{border-color:#5A4C3A}
+.login-screen .userlist button[aria-pressed="true"] .radio{border-color:var(--amber);background:var(--amber);box-shadow:inset 0 0 0 4px #2C2114}
+.login-screen .keypad button{background:#241B12;border-color:#3A2E20;color:#F6F1E8}
+.login-screen .keypad button:active{background:#2E2416}
+.login-screen .keypad button.go{background:var(--accent);border-color:var(--accent);color:#fff}
+.login-screen .pin-dots i{border-color:#F6F1E8}
+.login-screen .pin-dots i.on{background:var(--amber);border-color:var(--amber)}
+.login-screen .reqs{background:#201811;border-color:#3A2E20;color:#C3B8A6}
+.login-screen .reqs b{color:#F6F1E8}
+.login-screen .err{color:#F0A08F}
+@media (hover:hover){ .login-screen .userlist button:hover,.login-screen .keypad button:hover{background:#2A2015} }
 </style>
 </head><body>
 <div id="app"></div>
@@ -397,7 +425,7 @@ const ICON = {
   caixa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="1.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg>',
   gestao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
-  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10c0-3.2 3.6-5 8-5s8 1.8 8 5"/><path d="M3.5 13.5h17"/><path d="M6 17.5h12"/></svg>',
+  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
   edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>',
   printer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1"/><path d="M8 15h8v6H8z"/></svg>',
@@ -626,7 +654,7 @@ function renderTop(){
   const u = state.user;
   const nav = ACESSO[u.perfil].length>1 ? '<nav class="topnav" aria-label="Módulos">'+ACESSO[u.perfil].map(k=>'<button data-act="nav" data-v="'+k+'"'+(state.screen===k?' aria-current="page"':'')+'>'+TELAS[k]+'</button>').join("")+'</nav>' : '';
   const ini = u.nome.split(" ").map(x=>x[0]).join("").slice(0,2);
-  return '<header class="appbar"><div class="brand"><span class="mark">'+ICON.logo+'</span>Pará Lanches</div>'+nav+
+  return '<header class="appbar"><div class="brand"><span class="mark">'+ICON.logo+'</span>Jão Burguer</div>'+nav+
     '<button class="userbtn" data-act="menu" aria-label="Menu do usuário"><span><b>'+esc(u.nome.split(" ")[0])+'</b><span>'+u.perfil+'</span></span><span class="avatar">'+ini+'</span></button></header>';
 }
 function renderTabbar(){
@@ -660,8 +688,8 @@ function renderLogin(){
   const pronto = state.loginSel && state.pin.length===4;
   const keys = ["1","2","3","4","5","6","7","8","9"].map(k=>'<button data-act="key" data-v="'+k+'">'+k+'</button>').join("")+
     '<button class="fn" data-act="keydel" aria-label="Apagar último dígito">Apagar</button><button data-act="key" data-v="0">0</button><button class="fn go" data-act="entrar"'+(pronto?'':' disabled')+'>Entrar</button>';
-  return '<main class="no-tabbar"><div class="login">'+
-    '<div class="login-h"><span class="mark">'+ICON.logo+'</span><h1>Pará Lanches</h1><p class="muted small">Escolha seu usuário e digite o PIN</p></div>'+
+  return '<main class="no-tabbar login-screen"><div class="login">'+
+    '<div class="login-h"><span class="mark">'+ICON.logo+'</span><h1>Jão Burguer</h1><p class="muted small">Restaurante e Hamburgueria</p></div>'+
     '<div class="panel userlist">'+users+'</div>'+
     '<div style="display:grid;gap:12px"><div class="pin-dots" aria-label="PIN: '+state.pin.length+' de 4 dígitos">'+dots+'</div>'+
       (state.loginErr?'<div class="err" role="alert" style="text-align:center">'+esc(state.loginErr)+'</div>':'')+
