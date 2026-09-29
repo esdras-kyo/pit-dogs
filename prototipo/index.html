@@ -950,10 +950,49 @@ function renderEstoque(){
   return '<div class="page-h"><h1>Estoque</h1></div><section class="panel">'+sub+body+'</section>';
 }
 function renderEstItens(){
-  const rows=ITENS_ESTOQUE.map(i=>{ const baixo=i.saldo<=i.minimo;
-    return '<tr><td>'+esc(i.nome)+'</td><td>'+i.un+'</td><td class="num">'+i.saldo+'</td><td class="num">'+i.minimo+'</td><td>'+(baixo?'<span class="st pend">Repor</span>':'<span class="st pago">OK</span>')+'</td></tr>'; }).join("");
-  return '<div class="pad" style="padding-bottom:0"><p class="small muted">O saldo baixa sozinho a cada venda, pela ficha técnica do produto.</p></div>'+
-    '<div class="tbl-wrap"><table><thead><tr><th>Item</th><th>Un.</th><th>Saldo</th><th>Mínimo</th><th>Situação</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  const rows=ITENS_ESTOQUE.filter(i=>i.ativo).map(i=>{ const baixo=i.saldo<=i.minimo;
+    return '<li><button class="rowbtn" data-act="veritem" data-v="'+i.id+'">'+
+      '<span class="l1"><span style="font-weight:500">'+esc(i.nome)+'</span><span class="num">'+i.saldo+' '+i.un+'</span></span>'+
+      '<span class="l1 small"><span class="muted">Mínimo '+i.minimo+' '+i.un+' · custo '+brl(i.custo)+'</span>'+(baixo?'<span class="st pend">Repor</span>':'<span class="st pago">OK</span>')+'</span></button></li>'; }).join("");
+  return '<div class="pad" style="padding-bottom:0"><div class="row"><h3>Itens de estoque</h3><button class="btn sm" data-act="novoitem">Cadastrar item</button></div>'+
+    '<p class="small muted">O saldo baixa sozinho a cada venda, pela ficha técnica.</p></div>'+
+    '<ul class="plain-list tap">'+(rows||'<li class="empty">Nenhum item cadastrado.</li>')+'</ul>';
+}
+function sheetItemDet(m){
+  const it=itemEst(m.itemId); if(!it) return "";
+  const baixo=it.saldo<=it.minimo;
+  const hist=state.movEstoque.filter(x=>x.itemId===it.id);
+  const body='<div class="sumbox"><div class="row"><span>Saldo atual</span><span class="big num">'+it.saldo+' '+it.un+'</span></div>'+
+      '<div class="row small muted"><span>Estoque mínimo</span><span class="num">'+it.minimo+' '+it.un+'</span></div>'+
+      '<div class="row small muted"><span>Custo unitário</span><span class="num">'+brl(it.custo)+'</span></div>'+
+      '<div class="row small muted"><span>Valor em estoque</span><span class="num">'+brl(r2(it.saldo*it.custo))+'</span></div></div>'+
+    (baixo?'<div class="notice warn">Abaixo do mínimo — sugerir reposição.</div>':'')+
+    '<div class="row" style="gap:8px">'+["Entrada","Saída","Ajuste"].map(t=>'<button class="btn grow" data-act="movitem" data-v="'+it.id+'" data-t="'+t+'">'+t+'</button>').join("")+'</div>'+
+    (hist.length?'<div style="display:grid;gap:6px"><h3>Movimentações</h3><ul class="hist">'+
+      hist.slice(-12).reverse().map(x=>'<li><span>'+x.tipo+' · '+x.origem+(x.justificativa?' ('+esc(x.justificativa)+')':'')+' <span class="muted">'+hhmm(x.t)+'</span></span><span class="num'+(x.tipo==="Entrada"?' dif-sobra':x.tipo==="Saída"?' dif-falta':'')+'">'+(x.tipo==="Entrada"?'+':x.tipo==="Saída"?'−':'')+Math.abs(x.qtd)+' '+it.un+'</span></li>').join("")+'</ul></div>':'<p class="small muted">Sem movimentações ainda.</p>');
+  return sheetFrame(esc(it.nome),body,'<button class="btn lg" data-act="editaritem" data-v="'+it.id+'">Editar item</button>',it.un);
+}
+function sheetItemEst(m){
+  const ok=m.nome.trim() && m.un;
+  const uns=["un","g","kg","ml","L","fatia"];
+  const body='<label class="field"><span>Nome</span><input type="text" id="ei-nome" data-act="einome" value="'+esc(m.nome)+'" autocomplete="off"></label>'+
+    '<label class="field"><span>Unidade de medida</span><select id="ei-un" data-act="eiun">'+uns.map(u=>'<option'+(m.un===u?' selected':'')+'>'+u+'</option>').join("")+'</select></label>'+
+    '<label class="field"><span>Estoque mínimo ('+m.un+')</span><input type="text" id="ei-min" data-act="eimin" inputmode="decimal" value="'+esc(m.minimo)+'" class="num"></label>'+
+    '<label class="field"><span>Custo unitário (R$)</span><input type="text" id="ei-custo" data-act="eicusto" inputmode="decimal" value="'+esc(m.custo)+'" class="num"></label>'+
+    (m.id?'':'<label class="field"><span>Saldo inicial ('+m.un+')</span><input type="text" id="ei-saldo" data-act="eisaldo" inputmode="decimal" value="'+esc(m.saldo)+'" class="num"></label>');
+  return sheetFrame(m.id?'Editar item':'Cadastrar item',body,'<button class="btn primary lg block" data-act="confirmitemest"'+(ok?'':' disabled')+'>'+(m.id?'Salvar':'Cadastrar')+'</button>');
+}
+function sheetMovManual(m){
+  const it=itemEst(m.itemId), val=parseMoney(m.valor), ajuste=m.tipo==="Ajuste";
+  const ok = val>0 && (!ajuste || m.just.trim());
+  const seg='<div class="seg">'+["Entrada","Saída","Ajuste"].map(t=>'<button data-act="emtipo" data-v="'+t+'" aria-pressed="'+(m.tipo===t)+'">'+t+'</button>').join("")+'</div>';
+  const preview = m.valor==="" ? '' : (ajuste ? 'Saldo passará de '+it.saldo+' para '+val+' '+it.un+' (diferença '+r2(val-it.saldo)+')'
+    : 'Saldo passará para '+r2(m.tipo==="Entrada"?it.saldo+val:it.saldo-val)+' '+it.un);
+  const body=seg+'<p class="small muted">Saldo atual: <span class="num">'+it.saldo+' '+it.un+'</span></p>'+
+    '<label class="field"><span>'+(ajuste?'Novo saldo contado':'Quantidade')+' ('+it.un+')</span><input type="text" id="em-valor" data-act="emvalor" inputmode="decimal" placeholder="0" value="'+esc(m.valor)+'" class="num"></label>'+
+    (ajuste?'<label class="field"><span>Justificativa (obrigatória)</span><input type="text" id="em-just" data-act="emjust" placeholder="Ex.: correção de contagem" value="'+esc(m.just)+'"></label>':'')+
+    (preview?'<p class="small muted">'+preview+'</p>':'');
+  return sheetFrame('Movimentar — '+esc(it.nome),body,'<button class="btn primary lg block" data-act="confirmmov"'+(ok?'':' disabled')+'>Registrar '+m.tipo.toLowerCase()+'</button>',it.un);
 }
 function renderGestao(){
   const sub = subtabs(state.gestaoTab,"gtab",[["relatorios","Relatórios"],["integracoes","Integrações"],["config","Configurações"],["usuarios","Usuários"]]);
@@ -1033,6 +1072,9 @@ function renderSheet(){
   if (m.type==="desc") return sheetDesc(m);
   if (m.type==="ped") return sheetPed(m);
   if (m.type==="user") return sheetUser(m);
+  if (m.type==="estdet") return sheetItemDet(m);
+  if (m.type==="estitem") return sheetItemEst(m);
+  if (m.type==="estmov") return sheetMovManual(m);
   return "";
 }
 function sheetMesa(m){
@@ -1196,6 +1238,8 @@ function voltar(m){
   if (m.back) return {type:"pedido"};
   if (m.backPed) return {type:"ped",orderId:m.orderId};
   if (m.backMesa && contaOrders(m.backMesa).length) return {type:"mesa",mesa:m.backMesa};
+  if (m.type==="estmov") return {type:"estdet",itemId:m.itemId};
+  if (m.type==="estitem" && m.id) return {type:"estdet",itemId:m.id};
   return null;
 }
 function reprocessar(f){
@@ -1221,7 +1265,7 @@ document.addEventListener("click",ev=>{
   const el = ev.target.closest("[data-act]"); if(!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   if (a==="closebg"){ if (ev.target===el){ state.sheet=voltar(state.sheet); render(); } return; }
-  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial"].includes(a)) return;
+  if (["opt","rem","motivo","req","busca","obs","inf","movvalor","movobs","pvalor","precebido","outro","dval","dmot","cfglim","cfgprint","unome","upin","uperfil","inicial","einome","eiun","eimin","eicusto","eisaldo","emvalor","emjust"].includes(a)) return;
   ev.preventDefault();
   const m = state.sheet;
   switch(a){
@@ -1235,6 +1279,21 @@ document.addEventListener("click",ev=>{
     case "pdvtab": state.pdvTab=v; window.scrollTo(0,0); break;
     case "gtab": state.gestaoTab=v; break;
     case "esttab": state.estoqueTab=v; break;
+    case "novoitem": state.sheet={type:"estitem",id:null,nome:"",un:"un",minimo:"",custo:"",saldo:""}; break;
+    case "veritem": state.sheet={type:"estdet",itemId:Number(v)}; break;
+    case "editaritem": { const it=itemEst(Number(v)); state.sheet={type:"estitem",id:it.id,nome:it.nome,un:it.un,minimo:String(it.minimo),custo:fmtIn(it.custo),saldo:""}; break; }
+    case "movitem": state.sheet={type:"estmov",itemId:Number(v),tipo:el.dataset.t,valor:"",just:""}; break;
+    case "emtipo": m.tipo=v; break;
+    case "confirmitemest": {
+      if (m.id){ const it=itemEst(m.id); it.nome=m.nome.trim(); it.un=m.un; it.minimo=parseMoney(m.minimo); it.custo=parseMoney(m.custo); state.sheet={type:"estdet",itemId:it.id}; flash("Item "+it.nome+" atualizado."); }
+      else { const id=Math.max(0,...ITENS_ESTOQUE.map(i=>i.id))+1; ITENS_ESTOQUE.push({id,nome:m.nome.trim(),un:m.un,saldo:parseMoney(m.saldo),minimo:parseMoney(m.minimo),custo:parseMoney(m.custo),ativo:true}); state.sheet=null; flash("Item "+m.nome.trim()+" cadastrado."); }
+      break; }
+    case "confirmmov": {
+      const it=itemEst(m.itemId), val=parseMoney(m.valor);
+      if (m.tipo==="Saída" && val>it.saldo){ flash("Saída maior que o saldo ("+it.saldo+" "+it.un+")."); break; }
+      const origem = m.tipo==="Entrada"?"Entrada manual":m.tipo==="Saída"?"Saída manual":"Ajuste manual";
+      movimentar(m.itemId,m.tipo,origem,val,{justificativa:m.just.trim()});
+      state.sheet={type:"estdet",itemId:m.itemId}; flash(m.tipo+" registrada em "+it.nome+"."); break; }
     case "goint": state.screen="gestao"; state.gestaoTab="integracoes"; window.scrollTo(0,0); break;
     case "cat": state.cat=v; state.busca=""; break;
     case "addprod": {
@@ -1355,6 +1414,7 @@ document.addEventListener("change",ev=>{
   if (a==="req"){ state.showReq = el.checked; }
   else if (a==="cfgprint"){ state.cfg.autoPrint = el.checked; }
   else if (a==="uperfil"){ m.perfil = el.dataset.v; }
+  else if (a==="eiun"){ m.un = el.value; }
   else if (a==="opt"){
     const g = el.dataset.g, G = GRUPOS[g], sel = m.sel[g] = m.sel[g]||[];
     if (G.max===1) m.sel[g]=[el.dataset.v];
@@ -1384,6 +1444,12 @@ document.addEventListener("input",ev=>{
   else if (a==="dmot") m.motivo = el.value;
   else if (a==="unome") m.nome = el.value;
   else if (a==="upin") m.pin = el.value.replace(/\D/g,"").slice(0,4);
+  else if (a==="einome") m.nome = el.value;
+  else if (a==="eimin") m.minimo = el.value;
+  else if (a==="eicusto") m.custo = el.value;
+  else if (a==="eisaldo") m.saldo = el.value;
+  else if (a==="emvalor") m.valor = el.value;
+  else if (a==="emjust") m.just = el.value;
   else return;
   render();
 });
