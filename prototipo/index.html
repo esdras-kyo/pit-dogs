@@ -1,5 +1,6 @@
 <!doctype html><html lang="pt-BR" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Pará Lanches</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231C6E63' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 10c0-3.2 3.6-5 8-5s8 1.8 8 5'/><path d='M3.5 13.5h17'/><path d='M6 17.5h12'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Libre+Franklin:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap">
 <style>
@@ -365,6 +366,13 @@ input[type=text],input[type=password],select,textarea{border-radius:var(--r-sm)}
 /* ritmo de leitura consistente */
 h1,h2,h3{line-height:1.25}
 .small,.muted{line-height:1.45}
+
+/* identidade e ícones */
+.brand .mark,.login-h .mark{background:var(--accent);border:0;color:var(--accent-ink)}
+.brand .mark svg{width:16px;height:16px}
+.login-h .mark svg{width:26px;height:26px}
+.btn svg{width:16px;height:16px;flex:0 0 auto}
+.btn.lg svg{width:18px;height:18px}
 </style>
 </head><body>
 <div id="app"></div>
@@ -388,7 +396,15 @@ const ICON = {
   cozinha:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg>',
   caixa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="1.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v6M18 9v6"/></svg>',
   gestao:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
-  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>'
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  logo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10c0-3.2 3.6-5 8-5s8 1.8 8 5"/><path d="M3.5 13.5h17"/><path d="M6 17.5h12"/></svg>',
+  edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>',
+  printer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1"/><path d="M8 15h8v6H8z"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5l12 7-12 7z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>',
+  bag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>',
+  transfer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg>'
 };
 
 /* ---------- dados fictícios ---------- */
@@ -610,7 +626,7 @@ function renderTop(){
   const u = state.user;
   const nav = ACESSO[u.perfil].length>1 ? '<nav class="topnav" aria-label="Módulos">'+ACESSO[u.perfil].map(k=>'<button data-act="nav" data-v="'+k+'"'+(state.screen===k?' aria-current="page"':'')+'>'+TELAS[k]+'</button>').join("")+'</nav>' : '';
   const ini = u.nome.split(" ").map(x=>x[0]).join("").slice(0,2);
-  return '<header class="appbar"><div class="brand"><span class="mark">PL</span>Pará Lanches</div>'+nav+
+  return '<header class="appbar"><div class="brand"><span class="mark">'+ICON.logo+'</span>Pará Lanches</div>'+nav+
     '<button class="userbtn" data-act="menu" aria-label="Menu do usuário"><span><b>'+esc(u.nome.split(" ")[0])+'</b><span>'+u.perfil+'</span></span><span class="avatar">'+ini+'</span></button></header>';
 }
 function renderTabbar(){
@@ -645,7 +661,7 @@ function renderLogin(){
   const keys = ["1","2","3","4","5","6","7","8","9"].map(k=>'<button data-act="key" data-v="'+k+'">'+k+'</button>').join("")+
     '<button class="fn" data-act="keydel" aria-label="Apagar último dígito">Apagar</button><button data-act="key" data-v="0">0</button><button class="fn go" data-act="entrar"'+(pronto?'':' disabled')+'>Entrar</button>';
   return '<main class="no-tabbar"><div class="login">'+
-    '<div class="login-h"><span class="mark">PL</span><h1>Pará Lanches</h1><p class="muted small">Escolha seu usuário e digite o PIN</p></div>'+
+    '<div class="login-h"><span class="mark">'+ICON.logo+'</span><h1>Pará Lanches</h1><p class="muted small">Escolha seu usuário e digite o PIN</p></div>'+
     '<div class="panel userlist">'+users+'</div>'+
     '<div style="display:grid;gap:12px"><div class="pin-dots" aria-label="PIN: '+state.pin.length+' de 4 dígitos">'+dots+'</div>'+
       (state.loginErr?'<div class="err" role="alert" style="text-align:center">'+esc(state.loginErr)+'</div>':'')+
@@ -662,8 +678,8 @@ function orderPanel(inSheet){
       return '<li><div style="font-weight:500">'+esc(it.nome)+'</div><div class="num">'+brl(itemTotal(it))+'</div>'+
         (m.length?'<div class="det">'+m.join("<br>")+'</div>':'')+
         '<div class="ctrl"><span class="qty"><button data-act="qty" data-i="'+idx+'" data-d="-1" aria-label="Diminuir">−</button><span>'+it.qty+'</span><button data-act="qty" data-i="'+idx+'" data-d="1" aria-label="Aumentar">+</button></span>'+
-        '<span>'+(personalizavel(prod(it.prodId))?'<button class="btn text" data-act="edititem" data-i="'+idx+'">Editar</button>':'')+
-        '<button class="btn text red" data-act="delitem" data-i="'+idx+'">Remover</button></span></div></li>';
+        '<span>'+(personalizavel(prod(it.prodId))?'<button class="btn text" data-act="edititem" data-i="'+idx+'">'+ICON.edit+'Editar</button>':'')+
+        '<button class="btn text red" data-act="delitem" data-i="'+idx+'">'+ICON.trash+'Remover</button></span></div></li>';
     }).join("")+'</ul>' : '<div class="empty">Toque em um produto para começar o pedido.</div>';
   const desc = !c.itens.length ? '' : (c.desconto
     ? '<div class="row small"><span>Desconto: '+esc(c.desconto.motivo)+' <button class="btn text red" data-act="rmdesc">Remover</button></span><span class="num dif-falta">− '+brl(Math.min(c.desconto.valor,cartSub()))+'</span></div>'
@@ -745,16 +761,16 @@ function renderCozinha(){
       const late = st!=="Pronto" && espera > lim;
       const itens = o.itens.map(it=>{ const m=mods(it); return '<li><b>'+it.qty+'× '+esc(it.nome)+'</b>'+(m.length?'<div class="mods">'+m.join("<br>")+'</div>':'')+'</li>'; }).join("");
       let acao = "";
-      if (st==="Recebido") acao = '<button class="btn primary lg block" data-act="iniciar" data-v="'+o.id+'">Iniciar preparo</button>';
-      if (st==="Em preparação") acao = '<button class="btn primary lg block" data-act="pronto" data-v="'+o.id+'">Marcar como pronto</button>';
-      if (st==="Pronto") acao = '<button class="btn lg block" data-act="retirada" data-v="'+o.id+'">'+(o.origem==="Mesa/comanda"?"Registrar entrega na mesa":(o.origem==="Balcão"?"Registrar retirada":"Registrar coleta do entregador"))+'</button>';
+      if (st==="Recebido") acao = '<button class="btn primary lg block" data-act="iniciar" data-v="'+o.id+'">'+ICON.play+'Iniciar preparo</button>';
+      if (st==="Em preparação") acao = '<button class="btn primary lg block" data-act="pronto" data-v="'+o.id+'">'+ICON.check+'Marcar como pronto</button>';
+      if (st==="Pronto") acao = '<button class="btn lg block" data-act="retirada" data-v="'+o.id+'">'+ICON.bag+(o.origem==="Mesa/comanda"?"Registrar entrega na mesa":(o.origem==="Balcão"?"Registrar retirada":"Registrar coleta do entregador"))+'</button>';
       const meta = st==="Pronto"
         ? '<span class="muted">Pronto às '+hhmm(tSince(o,"Pronto"))+', preparo de '+mins(tSince(o,"Pronto")-tSince(o,"Em preparação"))+' min</span>'+pagLabel(o)
         : '<span class="muted">Recebido às '+hhmm(o.criadoEm)+'</span><span class="'+(late?'late-lbl':'muted')+'">'+(late?'Atrasado: ':'')+espera+' de '+lim+' min</span>';
       return '<article class="ticket'+(late?' late':'')+'">'+
         '<div class="ticket-h"><span class="id">#'+o.id+'</span><span>'+esc(origemLabel(o))+'</span></div>'+
         '<ul>'+itens+'</ul><div class="ticket-f"><div class="meta">'+meta+'</div>'+acao+
-        '<button class="btn text" data-act="reimprimir" data-v="'+o.id+'" style="justify-self:start;padding-left:0">Reimprimir comanda</button></div></article>';
+        '<button class="btn text" data-act="reimprimir" data-v="'+o.id+'" style="justify-self:start;padding-left:0">'+ICON.printer+'Reimprimir comanda</button></div></article>';
     }).join("") || '<div class="empty panel">Nenhum pedido '+(st==="Pronto"?"pronto":st==="Recebido"?"aguardando":"em preparo")+'.</div>';
     return '<section class="'+(state.kdsTab===st?'on':'')+'"><div class="col-h"><h2>'+label+'</h2><span class="num muted">'+os.length+'</span></div><div class="tickets">'+cards+'</div></section>';
   }).join("");
@@ -932,7 +948,7 @@ function sheetMesa(m){
   const total = os.reduce((s,o)=>s+orderTotal(o),0), pago = os.reduce((s,o)=>s+paidOf(o),0);
   const body = os.map(o=>'<div class="conta-ped"><div class="row"><span><span class="mono">#'+o.id+'</span> <span class="small muted">'+hhmm(o.criadoEm)+', '+o.status+'</span></span><span class="num">'+brl(orderTotal(o))+'</span></div>'+
       '<ul class="order-items">'+o.itens.map((it,i)=>{ const md=mods(it); return '<li><div>'+it.qty+'× '+esc(it.nome)+'</div><div class="num">'+brl(itemTotal(it))+'</div>'+(md.length?'<div class="det">'+md.join("<br>")+'</div>':'')+
-        '<div class="ctrl" style="justify-content:flex-end;margin-top:0"><button class="btn text" data-act="transf" data-o="'+o.id+'" data-i="'+i+'">Transferir</button></div></li>'; }).join("")+'</ul></div>').join("")+
+        '<div class="ctrl" style="justify-content:flex-end;margin-top:0"><button class="btn text" data-act="transf" data-o="'+o.id+'" data-i="'+i+'">'+ICON.transfer+'Transferir</button></div></li>'; }).join("")+'</ul></div>').join("")+
     '<div class="sumbox"><div class="row small muted"><span>Consumo</span><span class="num">'+brl(total)+'</span></div>'+
       (pago?'<div class="row small muted"><span>Já pago</span><span class="num">'+brl(pago)+'</span></div>':'')+
       '<div class="row"><span>A pagar</span><span class="big num">'+brl(total-pago)+'</span></div></div>';
@@ -968,7 +984,7 @@ function sheetPed(m){
   const hist = '<div style="display:grid;gap:6px"><h3>Histórico de status</h3><ul class="hist">'+o.historico.map(h=>'<li><span>'+h.status+'</span><span class="num muted">'+hhmm(h.t)+'</span></li>').join("")+'</ul></div>';
   const canc = o.status==="Cancelado" ? '<div class="notice">Cancelado por '+esc(o.canceladoPor||"")+'. Motivo: '+esc(o.motivoCancel||"")+'.</div>' : '';
   const podeCancelar = !["Finalizado","Cancelado"].includes(o.status) && !o.pagoExterno;
-  const foot = '<button class="btn lg" data-act="reimprimir" data-v="'+o.id+'">Reimprimir</button>'+
+  const foot = '<button class="btn lg" data-act="reimprimir" data-v="'+o.id+'">'+ICON.printer+'Reimprimir</button>'+
     (podeCancelar ? (pode("cancelar") ? '<button class="btn danger lg grow" data-act="cancelar" data-v="'+o.id+'">Cancelar pedido</button>' : '<span class="small muted grow">Cancelar exige perfil Administrador.</span>')
       : (o.pagoExterno && o.status!=="Cancelado" ? '<span class="small muted grow">Cancelamento de delivery vem da plataforma.</span>' : ''));
   return sheetFrame('Pedido <span class="mono">#'+o.id+'</span>',canc+itens+tot+pags+hist,foot,esc(origemLabel(o))+', registrado por '+esc(o.usuario));
