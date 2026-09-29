@@ -549,7 +549,7 @@ const state = {
   },
   movForm:{tipo:"Sangria",valor:"",obs:""},
   movEstoque:[], compras:[], inventarios:[], planos:[], perdas:[], alertas:[],
-  estoqueTab:"itens", nextMov:1, nextCompra:1, perdasPeriodo:"hoje",
+  estoqueTab:"itens", nextMov:1, nextCompra:1, perdasPeriodo:"hoje", syncPend:[],
   sheet:null, toast:""
 };
 state.orders = [
@@ -600,6 +600,12 @@ function estornarCancelamento(o){   // reverte estoque e pagamento conforme o es
   if (o.pagoExterno) notas.push("estorno pela plataforma");
   else if (o.pagamentos.length){ const pago=paidOf(o); o.pagamentos.forEach(p=>state.caixa.recebimentos.push({pedido:o.id,forma:p.forma,valor:-p.valor,t:now()})); notas.push("estorno de "+brl(pago)); }
   return notas;
+}
+function syncPlataforma(o,rotulo){   // sincroniza o estado do pedido com a plataforma (RF-085 / RNF-032-035)
+  if (o.origem!=="iFood" && o.origem!=="99Food") return "";
+  if (state.integ[o.origem] && state.integ[o.origem].online) return " "+o.origem+": "+rotulo.toLowerCase()+" sincronizado.";
+  state.syncPend.push({orderId:o.id,plataforma:o.origem,rotulo,t:now()});
+  return " "+o.origem+" offline: atualização guardada para reenvio.";
 }
 const custoItens = itens => r2(itens.reduce((s,[iid,q])=>s+q*((itemEst(iid)||{}).custo||0),0));  // RF-124 / RN-071
 const custoFicha = pid => custoItens(FICHAS[pid]||[]);
@@ -1180,10 +1186,11 @@ function renderRelatorios(){
   return '<div class="pad">'+seg+kpis+'<div class="charts">'+faixa+origem+prods+formas+'</div><p class="small muted">Dados de exemplo para o protótipo. Só pedidos concluídos entram no faturamento.</p></div>';
 }
 function renderIntegracoes(){
-  const plats = Object.keys(state.integ).map(k=>{ const i=state.integ[k];
+  const plats = Object.keys(state.integ).map(k=>{ const i=state.integ[k], pend=state.syncPend.filter(s=>s.plataforma===k).length;
     return '<li><div class="l1"><span style="font-weight:500">'+k+'</span>'+(i.online?'<span class="st pago">Conectado</span>':'<span class="st canc">Fora do ar desde '+hhmm(i.desde)+'</span>')+'</div>'+
       '<div class="l2"><span class="small muted" style="flex:1 1 200px">'+(i.online?'Pedidos entram sozinhos na fila da cozinha.':'Vendas presenciais continuam. Pedidos que falharem ficam guardados abaixo.')+'</span>'+
-      '<button class="btn sm" data-act="toggleint" data-v="'+k+'">'+(i.online?'Simular queda':'Restabelecer conexão')+'</button></div></li>'; }).join("");
+      '<button class="btn sm" data-act="toggleint" data-v="'+k+'">'+(i.online?'Simular queda':'Restabelecer conexão')+'</button></div>'+
+      (pend?'<div class="small" style="color:var(--warn)">'+pend+' atualização(ões) de status aguardando reenvio.</div>':'')+'</li>'; }).join("");
   const fal = state.falhas.slice().sort((a,b)=>b.t-a.t).map(f=>{
     const st = f.status==="pendente" ? '<span class="st pend">Aguardando</span>' : f.status==="reprocessado" ? '<span class="st pago">Importado</span>' : '<span class="st neutro">Ignorado</span>';
     return '<li><div class="l1"><span><span class="id">'+f.plataforma+' nº '+esc(f.externoId)+'</span></span>'+st+'</div>'+
@@ -1530,9 +1537,9 @@ document.addEventListener("click",ev=>{
       if (m.editIndex!=null) state.cart.itens[m.editIndex]=it; else { state.cart.itens.push(it); flash(p.nome+" adicionado ao pedido."); }
       state.sheet = m.back ? {type:"pedido"} : null; break; }
     case "kdstab": state.kdsTab=v; break;
-    case "iniciar": setStatus(state.orders.find(o=>o.id===Number(v)),"Em preparação"); flash("Pedido #"+v+" em preparo."); break;
-    case "pronto": setStatus(state.orders.find(o=>o.id===Number(v)),"Pronto"); flash("Pedido #"+v+" pronto para entrega."); break;
-    case "retirada": setStatus(state.orders.find(o=>o.id===Number(v)),"Finalizado"); flash("Pedido #"+v+" finalizado."); break;
+    case "iniciar": { const o=state.orders.find(x=>x.id===Number(v)); setStatus(o,"Em preparação"); flash("Pedido #"+v+" em preparo."+syncPlataforma(o,"Em preparo")); break; }
+    case "pronto": { const o=state.orders.find(x=>x.id===Number(v)); setStatus(o,"Pronto"); flash("Pedido #"+v+" pronto para entrega."+syncPlataforma(o,"Pronto")); break; }
+    case "retirada": { const o=state.orders.find(x=>x.id===Number(v)); setStatus(o,"Finalizado"); flash("Pedido #"+v+" finalizado."+syncPlataforma(o,"Coleta")); break; }
     case "reimprimir": flash("Comanda do pedido #"+v+" reimpressa."); break;
     case "cfiltro": state.consultaFiltro=v; break;
     case "verpedido": state.sheet={type:"ped",orderId:Number(v)}; break;
@@ -1607,7 +1614,8 @@ document.addEventListener("click",ev=>{
       if (i.online){ i.online=false; i.desde=now();
         state.falhas.push({id:nextFalha++,plataforma:v,externoId:(v==="iFood"?"":"C")+String(8000+Math.floor(Math.random()*999)),t:now(),erro:"Plataforma fora do ar",itens:[item(7,1,[["molhos","Ketchup"]],[]),item(11,1)],status:"pendente",resultado:""});
         flash(v+" fora do ar. Um pedido que chegou agora ficou guardado para reprocessar."); }
-      else { i.online=true; i.desde=null; flash(v+" conectado de novo. Reprocesse os pedidos pendentes."); }
+      else { i.online=true; i.desde=null; const p=state.syncPend.filter(s=>s.plataforma===v).length; state.syncPend=state.syncPend.filter(s=>s.plataforma!==v);
+        flash(v+" conectado de novo."+(p?" "+p+" atualização(ões) de status reenviada(s).":" Reprocesse os pedidos pendentes.")); }
       break; }
     case "reprocessar": reprocessar(state.falhas.find(f=>f.id===Number(v))); break;
     case "testprint": flash("Página de teste enviada para a impressora da cozinha."); break;
