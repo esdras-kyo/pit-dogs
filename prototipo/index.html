@@ -445,7 +445,7 @@ const USERS = [
 ];
 const ACESSO = {"Atendente":["pdv","cozinha"],"Cozinha":["cozinha"],"Caixa":["pdv","caixa"],"Administrador":["pdv","cozinha","caixa","gestao"]};
 const TELAS = {pdv:"Pedidos",cozinha:"Cozinha",caixa:"Caixa",gestao:"Gestão"};
-const PERM = {desconto:["Caixa","Administrador"],cancelar:["Atendente","Caixa","Administrador"]};
+const PERM = {desconto:["Atendente","Caixa","Administrador"],cancelar:["Atendente","Caixa","Administrador"]};
 const pode = a => !!(state.user && PERM[a].includes(state.user.perfil));
 const ORIGENS = ["Balcão","Mesa/comanda","iFood","99Food"];
 
