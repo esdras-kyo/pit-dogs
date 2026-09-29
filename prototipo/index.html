@@ -789,7 +789,7 @@ function orderPanel(inSheet){
     }).join("")+'</ul>' : '<div class="empty">Toque em um produto para começar o pedido.</div>';
   const desc = !c.itens.length ? '' : (c.desconto
     ? '<div class="row small"><span>Desconto: '+esc(c.desconto.motivo)+' <button class="btn text red" data-act="rmdesc">Remover</button></span><span class="num dif-falta">− '+brl(Math.min(c.desconto.valor,cartSub()))+'</span></div>'
-    : (pode("desconto") ? '<button class="btn text" data-act="desconto" style="justify-self:start;padding-left:0">Aplicar desconto</button>' : '<p class="small muted">Desconto só com perfil Caixa ou Administrador.</p>'));
+    : (pode("desconto") ? '<button class="btn text" data-act="desconto" style="justify-self:start;padding-left:0">Aplicar desconto</button>' : '<p class="small muted">Sem permissão para aplicar desconto.</p>'));
   const mesas = c.origem==="Mesa/comanda" ? '<div style="display:grid;gap:6px"><span class="small muted" style="font-weight:500">Mesa</span><div class="mesas">'+
       MESAS.map(m=>{ const oc = mesaOcupada(m), fech = contaFechada(m); return '<button data-act="mesa" data-v="'+m+'" aria-pressed="'+(c.mesa===m)+'" class="'+(oc?'ocup':'')+'"'+(fech?' disabled':'')+'>'+m+'<span>'+(fech?'Conta fechada':(oc?'Conta aberta':'Livre'))+'</span></button>';}).join("")+'</div></div>' : '';
   return '<div style="display:grid;gap:6px"><span class="small muted" style="font-weight:500">Origem do pedido</span><div class="seg">'+
@@ -1204,7 +1204,7 @@ function renderConfig(){
 function renderUsuarios(){
   const us = USERS.map(u=>'<li><div class="l1"><span style="font-weight:500">'+esc(u.nome)+'</span><span class="muted">'+u.perfil+'</span></div></li>').join("");
   const perfis = ["Atendente","Cozinha","Caixa","Administrador"];
-  const acoes = [["Registrar pedido",["Atendente","Caixa","Administrador"]],["Consultar pedidos",["Atendente","Caixa","Administrador"]],["Produzir pedido",["Atendente","Cozinha","Administrador"]],["Registrar pagamento",["Caixa","Administrador"]],["Aplicar desconto",PERM.desconto],["Cancelar pedido",PERM.cancelar],["Abrir e fechar caixa",["Caixa","Administrador"]],["Gestão",["Administrador"]]];
+  const acoes = [["Registrar pedido",["Atendente","Caixa","Administrador"]],["Consultar pedidos",["Atendente","Caixa","Administrador"]],["Produzir pedido (KDS)",["Atendente","Cozinha","Administrador"]],["Registrar entrega/retirada",["Atendente","Caixa","Administrador"]],["Aplicar desconto",PERM.desconto],["Cancelar pedido",PERM.cancelar],["Fechar conta da mesa",["Atendente","Caixa","Administrador"]],["Reabrir conta",PERM.reabrir],["Registrar pagamento",["Caixa","Administrador"]],["Abrir e fechar caixa",["Caixa","Administrador"]],["Estoque e retaguarda",["Administrador"]],["Gestão",["Administrador"]]];
   const tabela = '<div class="tbl-wrap"><table><thead><tr><th>Ação</th>'+perfis.map(p=>'<th>'+p+'</th>').join("")+'</tr></thead><tbody>'+
     acoes.map(([a,ps])=>'<tr><td>'+a+'</td>'+perfis.map(p=>ps.includes(p)?'<td>Sim</td>':'<td class="nao">Não</td>').join("")+'</tr>').join("")+'</tbody></table></div>';
   return '<div class="pad" style="padding-bottom:0"><div class="row"><h3>Usuários</h3><button class="btn sm" data-act="novousuario">Cadastrar usuário</button></div></div><ul class="plain-list">'+us+'</ul>'+
