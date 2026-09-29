@@ -459,8 +459,8 @@ const GRUPOS = {
 const REM_LANCHE = ["Milho","Ervilha","Batata palha","Tomate","Alface","Cebola"];
 const PRODUTOS = [
   {id:1,nome:"X-Burguer",cat:"Sanduíches",preco:18,grupos:["molhos","adicionais"],remover:REM_LANCHE},
-  {id:2,nome:"X-Egg Bacon",cat:"Sanduíches",preco:22,grupos:["molhos","adicionais"],remover:REM_LANCHE},
-  {id:3,nome:"X-Tudo",cat:"Sanduíches",preco:26,grupos:["molhos","adicionais"],remover:REM_LANCHE},
+  {id:2,nome:"X-Egg Bacon",cat:"Sanduíches",preco:22,grupos:["molhos","adicionais"],remover:REM_LANCHE.concat("Bacon")},
+  {id:3,nome:"X-Tudo",cat:"Sanduíches",preco:26,grupos:["molhos","adicionais"],remover:REM_LANCHE.concat("Bacon")},
   {id:4,nome:"X-Frango Catupiry",cat:"Sanduíches",preco:24,grupos:["molhos","adicionais"],remover:REM_LANCHE},
   {id:5,nome:"Misto quente",cat:"Sanduíches",preco:10,grupos:[],remover:["Tomate"]},
   {id:6,nome:"Pit dog simples",cat:"Hot dogs",preco:12,grupos:["molhos","adicionais"],remover:["Milho","Ervilha","Batata palha","Vinagrete"]},
@@ -497,7 +497,7 @@ const FICHAS = {
   11:[[7,1]], 12:[[7,1]], 16:[[1,1],[2,2],[3,25],[4,2],[6,400],[7,1]], 17:[[5,1],[1,1],[7,1]]
 };
 const ADIC_ESTOQUE = {"Bacon":{itemId:3,qtd:20},"Cheddar":{itemId:4,qtd:1},"Salsicha extra":{itemId:5,qtd:1},"Hambúrguer extra":{itemId:2,qtd:1}};
-const REM_ESTOQUE = {};  // ponytail: só remoções ligadas a item de estoque afetam consumo (RN-071A parcial)
+const REM_ESTOQUE = {"Bacon":3};  // remoção -> item de estoque; só onde a retirada evita o insumo (RN-071A). Veggies não controlados ficam de fora.
 const FORNECEDORES = [
   {id:1,nome:"Distribuidora Central",contato:"(91) 3222-0000"},
   {id:2,nome:"Frigorífico Pará",contato:"(91) 98888-1111"},
@@ -579,10 +579,11 @@ function movimentar(itemId,tipo,origem,qtd,extra){
 function registrarAlerta(it){ if(state.alertas.some(a=>a.itemId===it.id&&!a.resolvido)) return;
   state.alertas.push({itemId:it.id,saldo:it.saldo,minimo:it.minimo,t:now(),resolvido:false}); }
 function consumoDaOrder(o){ const m={};
-  o.itens.forEach(it=>{
-    (FICHAS[it.prodId]||[]).forEach(([iid,q])=>{ m[iid]=r2((m[iid]||0)+q*it.qty); });
-    it.escolhas.forEach(e=>{ const a=ADIC_ESTOQUE[e.nome]; if(a) m[a.itemId]=r2((m[a.itemId]||0)+a.qtd*it.qty); });   // RN-069
-    it.remocoes.forEach(nm=>{ const rr=REM_ESTOQUE[nm]; if(rr&&m[rr.itemId]) m[rr.itemId]=r2(Math.max(0,m[rr.itemId]-rr.qtd*it.qty)); }); // RN-071A
+  o.itens.forEach(it=>{ const line={};
+    (FICHAS[it.prodId]||[]).forEach(([iid,q])=>{ line[iid]=(line[iid]||0)+q; });
+    it.escolhas.forEach(e=>{ const a=ADIC_ESTOQUE[e.nome]; if(a) line[a.itemId]=(line[a.itemId]||0)+a.qtd; });   // RN-069: adicional soma consumo
+    it.remocoes.forEach(nm=>{ const iid=REM_ESTOQUE[nm]; if(iid!=null) delete line[iid]; });                    // RN-071A: retirar ingrediente controlado tira a baixa
+    Object.keys(line).forEach(iid=>{ m[iid]=r2((m[iid]||0)+line[iid]*it.qty); });
   });
   return m;
 }
